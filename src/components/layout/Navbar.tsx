@@ -13,7 +13,8 @@ import {
   Menu,
   X,
   LogOut,
-  Calendar
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -27,7 +28,10 @@ export default function Navbar() {
     searchQuery,
     setSearchQuery,
     dealTickets,
-    setIsAddPropertyModalOpen
+    setIsAddPropertyModalOpen,
+    setIsContactModalOpen,
+    setContactProperty,
+    unreadAdminMessagesCount
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -137,6 +141,19 @@ export default function Navbar() {
               </>
             )}
 
+            {/* Quick Direct Message to Admin Desk */}
+            <button
+              onClick={() => {
+                setContactProperty(null);
+                setIsContactModalOpen(true);
+              }}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 transition shadow-xs"
+              title="Message Sarah Jenkins, Admin Concierge Desk"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Contact Admin</span>
+            </button>
+
             {currentUser?.role === 'admin' && (
               <Link
                 href="/admin"
@@ -144,10 +161,16 @@ export default function Navbar() {
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Admin Concierge</span>
-                {activeDealsCount > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-white text-stone-900 text-[10px] flex items-center justify-center font-bold">
-                    {activeDealsCount}
+                {unreadAdminMessagesCount > 0 ? (
+                  <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-extrabold animate-pulse">
+                    {unreadAdminMessagesCount} new
                   </span>
+                ) : (
+                  activeDealsCount > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-white text-stone-900 text-[10px] flex items-center justify-center font-bold">
+                      {activeDealsCount}
+                    </span>
+                  )
                 )}
               </Link>
             )}
@@ -245,6 +268,18 @@ export default function Navbar() {
               Dashboard
             </Link>
           </div>
+
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setContactProperty(null);
+              setIsContactModalOpen(true);
+            }}
+            className="w-full py-2.5 rounded-full text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 shadow-xs transition"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Contact Admin Concierge</span>
+          </button>
         </div>
       )}
     </header>

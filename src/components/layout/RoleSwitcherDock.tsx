@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useApp } from '@/lib/store';
 import { UserRole } from '@/types';
-import { ShieldCheck, UserCheck, User, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { ShieldCheck, UserCheck, User, ChevronDown, ChevronUp, Sparkles, MessageSquare } from 'lucide-react';
 
 export default function RoleSwitcherDock() {
   const router = useRouter();
   const pathname = usePathname();
-  const { currentUser, login } = useApp();
+  const { currentUser, login, setIsContactModalOpen, setContactProperty } = useApp();
   const [isExpanded, setIsExpanded] = useState(true);
 
   // Don't show inside login page
@@ -87,6 +87,17 @@ export default function RoleSwitcherDock() {
                 <span className="text-[10px]">Admin Desk</span>
               </button>
             </div>
+
+            <button
+              onClick={() => {
+                setContactProperty(null);
+                setIsContactModalOpen(true);
+              }}
+              className="w-full mt-2 py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition shadow-xs"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Contact Admin Concierge</span>
+            </button>
           </div>
         )}
 

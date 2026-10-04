@@ -8,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 import RoleSwitcherDock from '@/components/layout/RoleSwitcherDock';
+import ContactAdminModal from '@/components/contact/ContactAdminModal';
 
 export default function RootLayout({
   children,
@@ -20,6 +21,7 @@ export default function RootLayout({
         <AppProvider>
           {children}
           <RoleSwitcherDock />
+          <ContactAdminModal />
         </AppProvider>
       </body>
     </html>

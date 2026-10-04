@@ -37,7 +37,8 @@ import {
   Briefcase,
   ChevronRight,
   LayoutGrid,
-  List
+  List,
+  MessageSquare
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -55,7 +56,9 @@ export default function AdminDealDesk() {
     togglePropertyFeatured,
     setIsAddPropertyModalOpen,
     setSelectedProperty,
-    setIsDetailModalOpen
+    setIsDetailModalOpen,
+    sendAdminReply,
+    unreadAdminMessagesCount
   } = useApp();
 
   // Hydration safety
@@ -78,6 +81,7 @@ export default function AdminDealDesk() {
   const [dealNotesInput, setDealNotesInput] = useState('');
   const [dealOfferPriceInput, setDealOfferPriceInput] = useState<number>(0);
   const [dealVisitDateInput, setDealVisitDateInput] = useState('');
+  const [adminReplyInput, setAdminReplyInput] = useState('');
 
   // KYC Document Preview Modal
   const [previewKycRecord, setPreviewKycRecord] = useState<KycRecord | null>(null);
@@ -190,12 +194,18 @@ export default function AdminDealDesk() {
     });
   }, [dealTickets, dealSearchQuery, selectedChannelFilter, selectedStageFilter]);
 
+  // Inbound messages filter
+  const inboundMessagesDeals = useMemo(() => {
+    return dealTickets.filter(d => d.buyerMessage || (d.messages && d.messages.length > 0));
+  }, [dealTickets]);
+
   // Open deal editor
   const handleOpenDealEditor = (deal: DealTicket) => {
     setInspectingDeal(deal);
     setDealNotesInput(deal.adminNotes || '');
     setDealOfferPriceInput(deal.offerPrice);
     setDealVisitDateInput(deal.scheduledVisitDate ? deal.scheduledVisitDate.split('T')[0] : '');
+    setAdminReplyInput('');
   };
 
   // Save deal updates
@@ -207,6 +217,31 @@ export default function AdminDealDesk() {
       scheduledVisitDate: dealVisitDateInput ? new Date(dealVisitDateInput).toISOString() : undefined
     });
     setInspectingDeal(null);
+  };
+
+  // Send reply handler
+  const handleSendReply = () => {
+    if (!inspectingDeal || !adminReplyInput.trim()) return;
+    sendAdminReply(inspectingDeal.id, adminReplyInput.trim());
+    setAdminReplyInput('');
+    // Update local modal state so the new reply immediately renders in modal
+    setInspectingDeal(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        stage: prev.stage === 'new_lead' ? 'contacted' : prev.stage,
+        messages: [
+          ...(prev.messages || []),
+          {
+            id: `msg-${Date.now()}`,
+            senderRole: 'admin',
+            senderName: 'Sarah Jenkins (Admin Concierge)',
+            text: adminReplyInput.trim(),
+            timestamp: new Date().toISOString()
+          }
+        ]
+      };
+    });
   };
 
   return (
@@ -337,6 +372,40 @@ export default function AdminDealDesk() {
           </button>
         </div>
       </div>
+
+      {/* 2.5 Inbound Buyer Messages & Inquiries Alert Strip */}
+      {inboundMessagesDeals.length > 0 && (
+        <div className="bg-gradient-to-r from-blue-50 via-indigo-50/60 to-purple-50/50 rounded-2xl p-4 sm:px-6 sm:py-4 border border-blue-200/90 shadow-[0_4px_16px_rgba(37,99,235,0.06)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-300">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <MessageSquare className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-extrabold text-blue-950 truncate">
+                  {inboundMessagesDeals.length} Inbound Buyer Message{inboundMessagesDeals.length > 1 ? 's' : ''} Received
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white shrink-0">
+                  Direct Inquiries
+                </span>
+              </div>
+              <p className="text-xs text-blue-800 font-medium truncate mt-0.5">
+                From <strong>{inboundMessagesDeals[0].buyerName}</strong>: "{inboundMessagesDeals[0].buyerMessage || 'Interested in property inspection and title verification'}"
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => handleOpenDealEditor(inboundMessagesDeals[0])}
+              className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5"
+            >
+              <span>View & Reply</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 3. Sub-Desk Navigation Tabs */}
       <div className="flex items-center justify-between border-b border-stone-200/80 pb-2 overflow-x-auto gap-3">
@@ -590,6 +659,24 @@ export default function AdminDealDesk() {
                               </a>
                             </div>
                           </div>
+
+                          {/* Inbound Buyer Message / Inquiry Quote */}
+                          {deal.buyerMessage && (
+                            <div className="p-2.5 rounded-xl bg-blue-50/90 border border-blue-200/90 text-xs space-y-1">
+                              <div className="flex items-center justify-between text-blue-900 font-bold text-[10px]">
+                                <span className="flex items-center gap-1">
+                                  <MessageSquare className="w-3 h-3 text-blue-600" />
+                                  <span>Inbound Message</span>
+                                </span>
+                                <span className="text-[10px] text-blue-600 font-mono">
+                                  {deal.messages?.length || 1} msg
+                                </span>
+                              </div>
+                              <p className="text-blue-950 font-normal italic text-[11px] leading-relaxed line-clamp-2">
+                                "{deal.buyerMessage}"
+                              </p>
+                            </div>
+                          )}
 
                           {/* Anti-circumvention Seller Shield */}
                           <div className="p-2 rounded-xl bg-amber-50/60 border border-amber-200/60 text-[11px] text-amber-900">
@@ -1206,6 +1293,77 @@ export default function AdminDealDesk() {
                   onChange={e => setDealVisitDateInput(e.target.value)}
                   className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-1.5 font-mono text-stone-900 focus:outline-none focus:border-stone-900"
                 />
+              </div>
+
+              {/* Interactive Conversation & Messaging Thread */}
+              <div className="space-y-2 p-3.5 rounded-2xl bg-stone-50 border border-stone-200">
+                <div className="flex items-center justify-between pb-1.5 border-b border-stone-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 flex items-center gap-1">
+                    <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Buyer Inbound Message & Negotiation Thread</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-stone-500 font-bold">
+                    {inspectingDeal.messages?.length || (inspectingDeal.buyerMessage ? 1 : 0)} messages
+                  </span>
+                </div>
+
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  {/* If initial buyerMessage exists but no messages array */}
+                  {inspectingDeal.buyerMessage && (!inspectingDeal.messages || inspectingDeal.messages.length === 0) && (
+                    <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-xs space-y-1">
+                      <div className="flex items-center justify-between text-[10px] text-blue-800 font-bold">
+                        <span>{inspectingDeal.buyerName} (Buyer)</span>
+                        <span className="font-mono text-blue-500">{formatDate(inspectingDeal.createdAt)}</span>
+                      </div>
+                      <p className="text-blue-950 font-normal">{inspectingDeal.buyerMessage}</p>
+                    </div>
+                  )}
+
+                  {inspectingDeal.messages?.map(msg => (
+                    <div
+                      key={msg.id}
+                      className={`p-2.5 rounded-xl text-xs space-y-1 ${
+                        msg.senderRole === 'admin'
+                          ? 'bg-purple-50 border border-purple-200 ml-4'
+                          : 'bg-blue-50 border border-blue-200 mr-4'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-[10px] font-bold">
+                        <span className={msg.senderRole === 'admin' ? 'text-purple-800' : 'text-blue-800'}>
+                          {msg.senderName} ({msg.senderRole === 'admin' ? 'You' : 'Buyer'})
+                        </span>
+                        <span className="font-mono text-stone-400 text-[9px]">{formatDate(msg.timestamp)}</span>
+                      </div>
+                      <p className={msg.senderRole === 'admin' ? 'text-purple-950 font-medium' : 'text-blue-950 font-normal'}>
+                        {msg.text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Admin Reply Box */}
+                <div className="pt-2 border-t border-stone-200 flex gap-2">
+                  <input
+                    type="text"
+                    value={adminReplyInput}
+                    onChange={e => setAdminReplyInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSendReply();
+                      }
+                    }}
+                    placeholder="Type official reply to buyer (e.g. Survey inspection confirmed)..."
+                    className="flex-1 bg-white border border-stone-300 rounded-xl px-3 py-1.5 text-xs text-stone-900 focus:outline-none focus:border-stone-900 font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSendReply}
+                    className="px-4 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs transition shrink-0"
+                  >
+                    Send Reply
+                  </button>
+                </div>
               </div>
 
               <div>

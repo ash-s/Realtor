@@ -14,11 +14,19 @@ import {
   PhoneCall,
   Calendar,
   Layers,
-  ArrowRight
+  ArrowRight,
+  MessageSquare
 } from 'lucide-react';
 
 export default function PropertyDetailModal() {
-  const { selectedProperty, isDetailModalOpen, setIsDetailModalOpen, setIsDealModalOpen } = useApp();
+  const {
+    selectedProperty,
+    isDetailModalOpen,
+    setIsDetailModalOpen,
+    setIsDealModalOpen,
+    setIsContactModalOpen,
+    setContactProperty
+  } = useApp();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   if (!isDetailModalOpen || !selectedProperty) return null;
@@ -168,16 +176,30 @@ export default function PropertyDetailModal() {
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                setIsDetailModalOpen(false);
-                setIsDealModalOpen(true);
-              }}
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition shrink-0 flex items-center justify-center gap-1.5"
-            >
-              <span>Express Interest & Book Visit</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto shrink-0">
+              <button
+                onClick={() => {
+                  setContactProperty(selectedProperty);
+                  setIsDetailModalOpen(false);
+                  setIsContactModalOpen(true);
+                }}
+                className="w-full sm:w-auto px-4 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5"
+              >
+                <MessageSquare className="w-4 h-4 text-emerald-600" />
+                <span>Message Admin</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  setIsDealModalOpen(true);
+                }}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition flex items-center justify-center gap-1.5"
+              >
+                <span>Express Interest & Book Visit</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
         </div>

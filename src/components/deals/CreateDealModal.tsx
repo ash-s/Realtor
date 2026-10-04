@@ -14,6 +14,7 @@ export default function CreateDealModal() {
   const [buyerName, setBuyerName] = useState('');
   const [buyerPhone, setBuyerPhone] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
+  const [buyerMessage, setBuyerMessage] = useState('');
   const [offerPrice, setOfferPrice] = useState<number>(initialPrice);
   const [visitDate, setVisitDate] = useState('');
   const [requestLegalAssistance, setRequestLegalAssistance] = useState(true);
@@ -34,11 +35,12 @@ export default function CreateDealModal() {
       buyerName,
       buyerPhone,
       buyerEmail: buyerEmail || 'buyer@verified.com',
+      buyerMessage: buyerMessage.trim() || undefined,
       offerPrice: Number(offerPrice) || initialPrice,
       scheduledDate: visitDate || new Date(Date.now() + 86400000 * 2).toISOString()
     });
 
-    alert('✅ Inquiry Submitted! Your Admin Concierge has been assigned. You will receive an SMS/WhatsApp confirmation with your scheduled visit details.');
+    alert('✅ Inquiry & Message Received by Admin Concierge! Sarah Jenkins will reach out via WhatsApp/Phone.');
   };
 
   return (
@@ -153,6 +155,19 @@ export default function CreateDealModal() {
                   />
                 </div>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-700 font-bold mb-1">
+                Message for Admin Concierge (Optional)
+              </label>
+              <textarea
+                rows={2}
+                value={buyerMessage}
+                onChange={e => setBuyerMessage(e.target.value)}
+                placeholder="e.g. Please verify DTCP survey number and arrange an AC vehicle escort..."
+                className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+              />
             </div>
 
             {/* Legal Addon Checkbox */}

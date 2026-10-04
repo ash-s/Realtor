@@ -22,7 +22,9 @@ import {
   ArrowRight,
   ExternalLink,
   ChevronRight,
-  Download
+  Download,
+  Send,
+  X
 } from 'lucide-react';
 import PropertyDetailModal from '@/components/property/PropertyDetailModal';
 import CreateDealModal from '@/components/deals/CreateDealModal';
@@ -35,14 +37,20 @@ export default function BuyerDashboardPage() {
     properties,
     setSelectedProperty,
     setIsDetailModalOpen,
-    setIsDealModalOpen
+    setIsDealModalOpen,
+    setIsContactModalOpen,
+    setContactProperty,
+    sendBuyerMessage
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'visits' | 'deals' | 'saved' | 'vault'>('visits');
+  const [activeChatDealId, setActiveChatDealId] = useState<string | null>(null);
+  const [chatInputText, setChatInputText] = useState('');
 
   // Filter deals where user is the buyer or all active buyer demo deals
   const myDeals = dealTickets;
   const myVisits = dealTickets.filter(d => d.scheduledVisitDate);
+  const currentChatDeal = dealTickets.find(d => d.id === activeChatDealId) || null;
   const savedProperties = properties.slice(0, 3); // demo shortlisted properties
 
   return (
@@ -282,10 +290,14 @@ export default function BuyerDashboardPage() {
                     </Link>
 
                     <button
-                      onClick={() => alert('Connecting you to Admin Concierge officer Sarah Jenkins (+1-800-PLOT-GIS)...')}
+                      onClick={() => {
+                        const prop = properties.find(p => p.id === deal.propertyId) || null;
+                        setContactProperty(prop);
+                        setIsContactModalOpen(true);
+                      }}
                       className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition flex items-center gap-1"
                     >
-                      <PhoneCall className="w-3.5 h-3.5 text-slate-600" />
+                      <MessageSquare className="w-3.5 h-3.5 text-slate-600" />
                       <span>Contact Admin</span>
                     </button>
                   </div>
@@ -315,42 +327,59 @@ export default function BuyerDashboardPage() {
                       <th className="py-3 px-4">Deal ID & Property</th>
                       <th className="py-3 px-4">Offer Price</th>
                       <th className="py-3 px-4">Current Stage</th>
-                      <th className="py-3 px-4">Admin Facilitator</th>
+                      <th className="py-3 px-4">Concierge Thread</th>
                       <th className="py-3 px-4">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {myDeals.map(deal => (
-                      <tr key={deal.id} className="hover:bg-slate-50 transition">
-                        <td className="py-3.5 px-4">
-                          <span className="font-mono text-[11px] text-slate-400 font-bold">{deal.id}</span>
-                          <div className="font-bold text-slate-900 text-xs">{deal.propertyTitle}</div>
-                          {deal.plotNumber && (
-                            <span className="text-[10px] text-blue-600 font-bold">Venture Plot #{deal.plotNumber}</span>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4 font-black text-slate-900" suppressHydrationWarning>
-                          {formatCurrency(deal.offerPrice)}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold capitalize bg-blue-50 text-blue-700 border border-blue-200">
-                            <Clock className="w-3 h-3" />
-                            <span>{deal.stage.replace('_', ' ')}</span>
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 font-medium text-slate-600">
-                          PlotTerra Legal Desk
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <button
-                            onClick={() => alert(`Opening escrow room for ${deal.propertyTitle}. Admin is reviewing sale deed draft.`)}
-                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition"
-                          >
-                            Open Escrow Room
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {myDeals.map(deal => {
+                      const msgCount = deal.messages?.length || 0;
+                      const lastMsg = msgCount > 0 ? deal.messages![msgCount - 1] : null;
+                      const hasAdminReply = lastMsg?.senderRole === 'admin';
+
+                      return (
+                        <tr key={deal.id} className="hover:bg-slate-50 transition">
+                          <td className="py-3.5 px-4">
+                            <span className="font-mono text-[11px] text-slate-400 font-bold">{deal.id}</span>
+                            <div className="font-bold text-slate-900 text-xs">{deal.propertyTitle}</div>
+                            {deal.plotNumber && (
+                              <span className="text-[10px] text-blue-600 font-bold">Venture Plot #{deal.plotNumber}</span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 font-black text-slate-900" suppressHydrationWarning>
+                            {formatCurrency(deal.offerPrice)}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold capitalize bg-blue-50 text-blue-700 border border-blue-200">
+                              <Clock className="w-3 h-3" />
+                              <span>{deal.stage.replace('_', ' ')}</span>
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {hasAdminReply ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse">
+                                🛡️ Admin Replied
+                              </span>
+                            ) : msgCount > 0 ? (
+                              <span className="text-[11px] text-slate-500 font-medium">
+                                {msgCount} message{msgCount > 1 ? 's' : ''} logged
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-slate-400">Direct Inbound</span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <button
+                              onClick={() => setActiveChatDealId(deal.id)}
+                              className="px-3 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>Messages & Escrow</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -500,6 +529,122 @@ export default function BuyerDashboardPage() {
 
       <PropertyDetailModal />
       <CreateDealModal />
+
+      {/* Interactive Deal Concierge & Message Thread Modal */}
+      {currentChatDeal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-stone-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in">
+          <div className="relative w-full max-w-lg bg-white border border-stone-200 rounded-3xl shadow-2xl overflow-hidden my-auto flex flex-col text-stone-900 max-h-[85vh]">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 bg-stone-50 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-stone-900 text-white flex items-center justify-center shadow-xs">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-stone-900">
+                    Admin Concierge Room
+                  </h3>
+                  <p className="text-[11px] text-stone-500 font-medium">
+                    Deal #{currentChatDeal.id} • Officer Sarah Jenkins
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setActiveChatDealId(null)}
+                className="p-1.5 rounded-full hover:bg-stone-200 text-stone-500 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Asset Summary Banner */}
+            <div className="px-6 py-3 bg-stone-50/70 border-b border-stone-100 flex items-center justify-between text-xs shrink-0">
+              <div>
+                <div className="font-bold text-stone-900">{currentChatDeal.propertyTitle}</div>
+                <div className="text-[11px] text-stone-500">
+                  {currentChatDeal.plotNumber || 'Land Asset'} • Status:{' '}
+                  <span className="font-bold text-blue-700 capitalize">
+                    {currentChatDeal.stage.replace('_', ' ')}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] text-stone-400 font-bold uppercase">Offer Amount</div>
+                <div className="font-extrabold text-stone-900" suppressHydrationWarning>
+                  {formatCurrency(currentChatDeal.offerPrice)}
+                </div>
+              </div>
+            </div>
+
+            {/* Message Thread List */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-3.5 bg-slate-50/50">
+              {(!currentChatDeal.messages || currentChatDeal.messages.length === 0) ? (
+                <div className="text-center py-8 text-stone-400 text-xs">
+                  No messages yet. Send a direct inquiry to Officer Sarah Jenkins below.
+                </div>
+              ) : (
+                currentChatDeal.messages.map(msg => (
+                  <div
+                    key={msg.id}
+                    className={`flex flex-col ${
+                      msg.senderRole === 'buyer' ? 'items-end' : 'items-start'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 mb-1 px-1">
+                      <span className="text-[10px] font-bold text-stone-600">
+                        {msg.senderRole === 'admin' ? '🛡️ Sarah Jenkins (Admin Concierge)' : '👤 You (Buyer)'}
+                      </span>
+                      <span className="text-[9px] text-stone-400">
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs shadow-xs leading-relaxed ${
+                        msg.senderRole === 'buyer'
+                          ? 'bg-blue-600 text-white rounded-tr-xs'
+                          : 'bg-white border border-stone-200 text-stone-900 rounded-tl-xs'
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Buyer Reply Bar */}
+            <div className="p-4 bg-white border-t border-stone-100 flex items-center gap-2 shrink-0">
+              <input
+                type="text"
+                value={chatInputText}
+                onChange={e => setChatInputText(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && chatInputText.trim()) {
+                    sendBuyerMessage(currentChatDeal.id, chatInputText.trim());
+                    setChatInputText('');
+                  }
+                }}
+                placeholder="Type your message to Sarah Jenkins..."
+                className="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition"
+              />
+              <button
+                onClick={() => {
+                  if (!chatInputText.trim()) return;
+                  sendBuyerMessage(currentChatDeal.id, chatInputText.trim());
+                  setChatInputText('');
+                }}
+                className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Send</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

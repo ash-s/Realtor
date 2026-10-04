@@ -241,6 +241,23 @@ export const INITIAL_DEAL_TICKETS: DealTicket[] = [
     buyerName: 'David Vance (Individual Investor)',
     buyerPhone: '+1 (555) 392-1084',
     buyerEmail: 'david.vance@investcapital.com',
+    buyerMessage: 'Hello Admin, I would like to arrange an escorted site inspection for Plot #103 this Saturday. Please confirm the licensed surveyor availability and DTCP sanction documents.',
+    messages: [
+      {
+        id: 'msg-001',
+        senderRole: 'buyer',
+        senderName: 'David Vance',
+        text: 'Hello Admin, I would like to arrange an escorted site inspection for Plot #103 this Saturday. Please confirm the licensed surveyor availability and DTCP sanction documents.',
+        timestamp: '2026-10-02T16:20:00Z'
+      },
+      {
+        id: 'msg-002',
+        senderRole: 'admin',
+        senderName: 'Sarah Jenkins (Admin Concierge)',
+        text: 'Hello David! Site survey confirmed for Saturday 10:30 AM. Cadastral surveyor #104 will meet you at the site with boundary instruments.',
+        timestamp: '2026-10-03T09:00:00Z'
+      }
+    ],
     offerPrice: 58000,
     commissionRate: 2.0,
     stage: 'site_visit_scheduled',
@@ -256,6 +273,16 @@ export const INITIAL_DEAL_TICKETS: DealTicket[] = [
     buyerName: 'Elena Rostova',
     buyerPhone: '+1 (555) 774-9921',
     buyerEmail: 'elena.rostova@vipestates.org',
+    buyerMessage: 'Can you please provide the 30-year Encumbrance Certificate (EC) and verify the RERA title deed before I place the token escrow?',
+    messages: [
+      {
+        id: 'msg-003',
+        senderRole: 'buyer',
+        senderName: 'Elena Rostova',
+        text: 'Can you please provide the 30-year Encumbrance Certificate (EC) and verify the RERA title deed before I place the token escrow?',
+        timestamp: '2026-10-03T11:45:00Z'
+      }
+    ],
     offerPrice: 1800000,
     commissionRate: 1.5,
     stage: 'legal_verification',

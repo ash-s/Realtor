@@ -92,6 +92,14 @@ export type DealStage =
   | 'closed'
   | 'cancelled';
 
+export interface MessageItem {
+  id: string;
+  senderRole: 'buyer' | 'admin' | 'seller';
+  senderName: string;
+  text: string;
+  timestamp: string;
+}
+
 export interface DealTicket {
   id: string;
   propertyId: string;
@@ -101,6 +109,8 @@ export interface DealTicket {
   buyerName: string;
   buyerPhone: string;
   buyerEmail: string;
+  buyerMessage?: string;
+  messages?: MessageItem[];
   offerPrice: number;
   commissionRate: number; // e.g., 2.0%
   stage: DealStage;

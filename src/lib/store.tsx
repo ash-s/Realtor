@@ -47,6 +47,10 @@ interface AppContextType {
   setIsDealModalOpen: (open: boolean) => void;
   isKycModalOpen: boolean;
   setIsKycModalOpen: (open: boolean) => void;
+  isContactModalOpen: boolean;
+  setIsContactModalOpen: (open: boolean) => void;
+  contactProperty: Property | null;
+  setContactProperty: (prop: Property | null) => void;
 
   // Actions
   addNewProperty: (newProp: Omit<Property, 'id' | 'createdAt'>) => void;
@@ -57,9 +61,23 @@ interface AppContextType {
     buyerName: string;
     buyerPhone: string;
     buyerEmail: string;
+    buyerMessage?: string;
     offerPrice: number;
     scheduledDate?: string;
   }) => void;
+  contactAdmin: (data: {
+    propertyId?: string;
+    propertyTitle?: string;
+    plotNumber?: string;
+    buyerName: string;
+    buyerPhone: string;
+    buyerEmail?: string;
+    message: string;
+    scheduledDate?: string;
+    offerPrice?: number;
+  }) => void;
+  sendAdminReply: (dealId: string, replyText: string) => void;
+  sendBuyerMessage: (dealId: string, text: string) => void;
   updateDealStage: (dealId: string, stage: DealStage) => void;
   updatePlotStatus: (propertyId: string, plotId: string, status: PlotStatus) => void;
   submitKyc: (data: { name: string; entityType: EntityType; idType: any; idNumber: string }) => void;
@@ -74,6 +92,7 @@ interface AppContextType {
   dealTickets: DealTicket[];
   kycRecords: KycRecord[];
   activeDealsCount: number;
+  unreadAdminMessagesCount: number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -102,6 +121,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isAddPropertyModalOpen, setIsAddPropertyModalOpen] = useState(false);
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
   const [isKycModalOpen, setIsKycModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactProperty, setContactProperty] = useState<Property | null>(null);
 
   const [dealTickets, setDealTickets] = useState<DealTicket[]>(INITIAL_DEAL_TICKETS);
   const [kycRecords, setKycRecords] = useState<KycRecord[]>(INITIAL_KYC_RECORDS);
@@ -161,6 +182,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Create deal ticket (Admin Concierge mediation)
+  // Create deal ticket (Admin Concierge mediation)
   const createDealTicket = (data: {
     propertyId: string;
     propertyTitle: string;
@@ -168,11 +190,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     buyerName: string;
     buyerPhone: string;
     buyerEmail: string;
+    buyerMessage?: string;
     offerPrice: number;
     scheduledDate?: string;
   }) => {
+    const newDealId = `deal-${Date.now().toString().slice(-4)}`;
     const newDeal: DealTicket = {
-      id: `deal-${Date.now().toString().slice(-4)}`,
+      id: newDealId,
       propertyId: data.propertyId,
       propertyTitle: data.propertyTitle,
       plotNumber: data.plotNumber,
@@ -180,11 +204,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       buyerName: data.buyerName,
       buyerPhone: data.buyerPhone,
       buyerEmail: data.buyerEmail,
+      buyerMessage: data.buyerMessage,
+      messages: data.buyerMessage
+        ? [
+            {
+              id: `msg-${Date.now()}`,
+              senderRole: 'buyer',
+              senderName: data.buyerName,
+              text: data.buyerMessage,
+              timestamp: new Date().toISOString()
+            }
+          ]
+        : [],
       offerPrice: data.offerPrice,
       commissionRate: 2.0,
       stage: 'new_lead',
       scheduledVisitDate: data.scheduledDate || new Date(Date.now() + 86400000 * 2).toISOString(),
-      adminNotes: 'Inquiry received via portal. Seller phone protected. Admin assigned to coordinate meeting.',
+      adminNotes: data.buyerMessage
+        ? `[Inquiry Message Received]: "${data.buyerMessage}"`
+        : 'Inquiry received via portal. Seller phone protected. Admin assigned to coordinate meeting.',
       createdAt: new Date().toISOString()
     };
 
@@ -200,6 +238,104 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     }
+  };
+
+  // Direct Contact Admin Handler
+  const contactAdmin = (data: {
+    propertyId?: string;
+    propertyTitle?: string;
+    plotNumber?: string;
+    buyerName: string;
+    buyerPhone: string;
+    buyerEmail?: string;
+    message: string;
+    scheduledDate?: string;
+    offerPrice?: number;
+  }) => {
+    const newDealId = `deal-${Date.now().toString().slice(-4)}`;
+    const newDeal: DealTicket = {
+      id: newDealId,
+      propertyId: data.propertyId || 'inquiry-general',
+      propertyTitle: data.propertyTitle || 'Direct Admin Concierge Inquiry',
+      plotNumber: data.plotNumber,
+      channel: activeChannel,
+      buyerName: data.buyerName,
+      buyerPhone: data.buyerPhone,
+      buyerEmail: data.buyerEmail || 'buyer@verified.com',
+      buyerMessage: data.message,
+      messages: [
+        {
+          id: `msg-${Date.now()}`,
+          senderRole: 'buyer',
+          senderName: data.buyerName,
+          text: data.message,
+          timestamp: new Date().toISOString()
+        }
+      ],
+      offerPrice: data.offerPrice || 0,
+      commissionRate: 2.0,
+      stage: 'new_lead',
+      scheduledVisitDate: data.scheduledDate || new Date(Date.now() + 86400000 * 2).toISOString(),
+      adminNotes: `[Direct Message from Buyer]: "${data.message}"`,
+      createdAt: new Date().toISOString()
+    };
+
+    setDealTickets(prev => [newDeal, ...prev]);
+    setIsContactModalOpen(false);
+
+    try {
+      confetti({
+        particleCount: 70,
+        spread: 70,
+        origin: { y: 0.7 }
+      });
+    } catch {
+      // ignore
+    }
+  };
+
+  // Send Admin Reply to Buyer
+  const sendAdminReply = (dealId: string, replyText: string) => {
+    const replyItem = {
+      id: `msg-${Date.now()}`,
+      senderRole: 'admin' as const,
+      senderName: currentUser?.name || 'Sarah Jenkins (Admin Concierge)',
+      text: replyText,
+      timestamp: new Date().toISOString()
+    };
+
+    setDealTickets(prev =>
+      prev.map(d => {
+        if (d.id !== dealId) return d;
+        return {
+          ...d,
+          stage: d.stage === 'new_lead' ? 'contacted' : d.stage,
+          messages: [...(d.messages || []), replyItem],
+          adminNotes: `${d.adminNotes ? d.adminNotes + '\n' : ''}[Admin Replied]: ${replyText}`
+        };
+      })
+    );
+  };
+
+  // Send Buyer Message in thread
+  const sendBuyerMessage = (dealId: string, text: string) => {
+    const msgItem = {
+      id: `msg-${Date.now()}`,
+      senderRole: 'buyer' as const,
+      senderName: currentUser?.name || 'Buyer',
+      text,
+      timestamp: new Date().toISOString()
+    };
+
+    setDealTickets(prev =>
+      prev.map(d => {
+        if (d.id !== dealId) return d;
+        return {
+          ...d,
+          messages: [...(d.messages || []), msgItem]
+        };
+      })
+    );
   };
 
   // Update deal stage
@@ -306,6 +442,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const activeDealsCount = dealTickets.filter(d => d.stage !== 'closed' && d.stage !== 'cancelled').length;
 
+  const unreadAdminMessagesCount = dealTickets.filter(
+    d => d.stage === 'new_lead' || (d.messages && d.messages.length > 0 && d.messages[d.messages.length - 1].senderRole === 'buyer')
+  ).length;
+
   return (
     <AppContext.Provider
       value={{
@@ -331,8 +471,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setIsDealModalOpen,
         isKycModalOpen,
         setIsKycModalOpen,
+        isContactModalOpen,
+        setIsContactModalOpen,
+        contactProperty,
+        setContactProperty,
         addNewProperty,
         createDealTicket,
+        contactAdmin,
+        sendAdminReply,
+        sendBuyerMessage,
         updateDealStage,
         updatePlotStatus,
         submitKyc,
@@ -344,7 +491,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         deleteDealTicket,
         dealTickets,
         kycRecords,
-        activeDealsCount
+        activeDealsCount,
+        unreadAdminMessagesCount
       }}
     >
       {children}
