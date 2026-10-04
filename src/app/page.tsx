@@ -1,69 +1,234 @@
-import Image from "next/image";
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useApp } from '@/lib/store';
+import Navbar from '@/components/layout/Navbar';
+import GoogleMapGIS from '@/components/map/GoogleMapGIS';
+import VentureLayoutExplorer from '@/components/map/VentureLayoutExplorer';
+import PropertyCard from '@/components/property/PropertyCard';
+import PropertyDetailModal from '@/components/property/PropertyDetailModal';
+import CreateDealModal from '@/components/deals/CreateDealModal';
+import AddPropertyModal from '@/components/seller/AddPropertyModal';
+import KycModal from '@/components/kyc/KycModal';
+import {
+  LayoutGrid,
+  Map as MapIcon
+} from 'lucide-react';
 
 export default function Home() {
+  const {
+    activeChannel,
+    properties,
+    selectedProperty,
+    setSelectedProperty,
+    searchQuery,
+    selectedSubType,
+    setSelectedSubType
+  } = useApp();
+
+  const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
+
+  // Filter properties by channel, search, and subtype
+  const filteredProperties = properties.filter(prop => {
+    if (prop.channel !== activeChannel) return false;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchTitle = prop.title.toLowerCase().includes(q);
+      const matchCity = prop.location.city.toLowerCase().includes(q);
+      const matchAddress = prop.location.address.toLowerCase().includes(q);
+      const matchSurvey = prop.verification.surveyNumber.toLowerCase().includes(q);
+      if (!matchTitle && !matchCity && !matchAddress && !matchSurvey) return false;
+    }
+
+    if (selectedSubType !== 'all' && prop.subType !== selectedSubType) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Automatically select the first property and fly the map whenever active channel or subtype changes
+  useEffect(() => {
+    if (filteredProperties.length > 0) {
+      const isCurrentInFiltered = filteredProperties.some(p => p.id === selectedProperty?.id);
+      if (!isCurrentInFiltered) {
+        setSelectedProperty(filteredProperties[0]);
+      }
+    }
+  }, [activeChannel, selectedSubType, filteredProperties, selectedProperty?.id, setSelectedProperty]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen flex flex-col bg-[#FAFAF9] text-stone-900 font-sans">
+      <Navbar />
+
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-6 space-y-5">
+        
+        {/* Top Channel Sub-Header & SubType Filter Pills */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-[24px] border border-stone-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+          <div className="space-y-0.5 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-stone-900 uppercase tracking-wider truncate">
+                {activeChannel === 'land_plot' ? '🌱 Land, Plots & Farmhouse Parcels' : '🏢 Luxury Villas & Constructed Assets'}
+              </span>
+              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 shrink-0">
+                {filteredProperties.length} Verified
+              </span>
+            </div>
+            <p className="text-xs text-stone-500 font-medium">
+              {activeChannel === 'land_plot'
+                ? 'Click any property below to view its surveyed boundary polygon on Google Maps Satellite.'
+                : 'Tour luxury residences with verified construction stages and clear title deeds.'}
+            </p>
+          </div>
+
+          {/* Subtype Filter Pills */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="hidden sm:flex items-center gap-1.5 bg-stone-100 p-1 rounded-full border border-stone-200/70 text-xs">
+              <button
+                onClick={() => setSelectedSubType('all')}
+                className={`px-3.5 py-1.5 rounded-full font-semibold transition ${
+                  selectedSubType === 'all'
+                    ? 'bg-stone-900 text-white shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                All
+              </button>
+
+              {activeChannel === 'land_plot' ? (
+                <>
+                  <button
+                    onClick={() => setSelectedSubType('residential_plot')}
+                    className={`px-3.5 py-1.5 rounded-full font-semibold transition ${
+                      selectedSubType === 'residential_plot'
+                        ? 'bg-stone-900 text-white shadow-xs'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    Residential Plots
+                  </button>
+                  <button
+                    onClick={() => setSelectedSubType('farmhouse_land')}
+                    className={`px-3.5 py-1.5 rounded-full font-semibold transition ${
+                      selectedSubType === 'farmhouse_land'
+                        ? 'bg-stone-900 text-white shadow-xs'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    Farmhouse Lands
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setSelectedSubType('luxury_villa')}
+                  className={`px-3.5 py-1.5 rounded-full font-semibold transition ${
+                    selectedSubType === 'luxury_villa'
+                      ? 'bg-stone-900 text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  Luxury Villas
+                </button>
+              )}
+            </div>
+
+            {/* Mobile View Switcher */}
+            <div className="flex sm:hidden w-full bg-stone-100 p-1 rounded-full border border-stone-200 text-xs font-semibold">
+              <button
+                onClick={() => setMobileView('list')}
+                className={`flex-1 py-1.5 rounded-full flex items-center justify-center gap-1 ${
+                  mobileView === 'list' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-600'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>List</span>
+              </button>
+              <button
+                onClick={() => setMobileView('map')}
+                className={`flex-1 py-1.5 rounded-full flex items-center justify-center gap-1 ${
+                  mobileView === 'map' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-600'
+                }`}
+              >
+                <MapIcon className="w-3.5 h-3.5" />
+                <span>Map</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* Main Grid: Properties Feed + Google Maps Canvas */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          
+          {/* LEFT: Properties Feed (5 cols on desktop) */}
+          <div
+            className={`lg:col-span-5 space-y-3.5 min-w-0 ${
+              mobileView === 'map' ? 'hidden lg:block' : 'block'
+            }`}
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <div className="flex items-center justify-between text-xs text-stone-500 px-1 font-medium">
+              <span>Showing {filteredProperties.length} Properties</span>
+              <span className="text-[11px] text-stone-800 font-semibold">Click to View on Map</span>
+            </div>
+
+            <div className="space-y-4 max-h-[820px] overflow-y-auto pr-1">
+              {filteredProperties.map(property => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+
+              {filteredProperties.length === 0 && (
+                <div className="p-10 text-center bg-white rounded-[24px] border border-stone-200 text-stone-500 space-y-2">
+                  <p className="text-sm font-semibold text-stone-900">No properties found</p>
+                  <p className="text-xs">Try selecting a different channel or clearing search terms.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT: Google Maps Satellite Engine & Plotted Venture Explorer (7 cols) */}
+          <div
+            className={`lg:col-span-7 space-y-5 min-w-0 ${
+              mobileView === 'list' ? 'hidden lg:block' : 'block'
+            }`}
           >
-            Documentation
-          </a>
+            {/* Movable Google Maps Component */}
+            <div className="w-full">
+              <GoogleMapGIS />
+            </div>
+
+            {/* Interactive Plotted Venture Masterplan Explorer */}
+            {selectedProperty?.isVentureLayout && (
+              <div className="w-full">
+                <VentureLayoutExplorer />
+              </div>
+            )}
+          </div>
+
         </div>
+
       </main>
+
+      <PropertyDetailModal />
+      <CreateDealModal />
+      <AddPropertyModal />
+      <KycModal />
+
+      {/* Footer */}
+      <footer className="border-t border-stone-200 bg-white py-6 text-xs text-stone-500 mt-12">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+            <span className="font-semibold text-stone-900">PlotTerra GIS Real Estate Platform</span>
+            <span>· Anti-Circumvention Protection</span>
+          </div>
+          <div className="flex items-center gap-4 text-stone-500 text-[11px]">
+            <span>Google Maps Satellite Engine</span>
+            <span>DTCP / RERA Verified</span>
+            <span>Admin Concierge Escrow Model</span>
+          </div>
+        </div>
+      </footer>
+
     </div>
   );
 }
