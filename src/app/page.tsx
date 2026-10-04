@@ -1,15 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useApp } from '@/lib/store';
 import Navbar from '@/components/layout/Navbar';
-import GoogleMapGIS from '@/components/map/GoogleMapGIS';
 import VentureLayoutExplorer from '@/components/map/VentureLayoutExplorer';
 import PropertyCard from '@/components/property/PropertyCard';
 import PropertyDetailModal from '@/components/property/PropertyDetailModal';
 import CreateDealModal from '@/components/deals/CreateDealModal';
 import AddPropertyModal from '@/components/seller/AddPropertyModal';
 import KycModal from '@/components/kyc/KycModal';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 import {
   LayoutGrid,
   Map as MapIcon,
@@ -17,6 +18,16 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
+
+const GoogleMapGIS = dynamic(() => import('@/components/map/GoogleMapGIS'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[500px] sm:h-[600px] lg:h-[680px] rounded-[28px] bg-stone-100 border border-stone-200/80 flex flex-col items-center justify-center text-xs text-stone-500 font-medium space-y-2">
+      <div className="w-6 h-6 border-2 border-stone-300 border-t-stone-900 rounded-full animate-spin"></div>
+      <p>Loading Satellite GIS Engine...</p>
+    </div>
+  )
+});
 
 export default function Home() {
   const {
@@ -219,13 +230,17 @@ export default function Home() {
           >
             {/* Movable Google Maps Component */}
             <div className="w-full">
-              <GoogleMapGIS />
+              <ErrorBoundary fallbackTitle="Satellite GIS Map">
+                <GoogleMapGIS />
+              </ErrorBoundary>
             </div>
 
             {/* Interactive Plotted Venture Masterplan Explorer */}
             {selectedProperty?.isVentureLayout && (
               <div className="w-full">
-                <VentureLayoutExplorer />
+                <ErrorBoundary fallbackTitle="Plotted Venture Masterplan">
+                  <VentureLayoutExplorer />
+                </ErrorBoundary>
               </div>
             )}
           </div>

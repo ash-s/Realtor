@@ -14,6 +14,7 @@ import {
   Map as MapIcon,
   Check
 } from 'lucide-react';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 
 export default function VentureLayoutExplorer() {
   const { selectedProperty, selectedVenturePlotId, setSelectedVenturePlotId, setIsDealModalOpen } = useApp();
@@ -287,11 +288,11 @@ export default function VentureLayoutExplorer() {
                       </span>
                     </div>
                     <div className="mt-2 text-xs text-stone-500">
-                      <div>{plot.sqft.toLocaleString('en-US')} sq ft</div>
+                      <div>{formatNumber(plot.sqft)} sq ft</div>
                       <div className="text-[11px] text-stone-400">{plot.dimensions} · {plot.facing}</div>
                     </div>
-                    <div className="mt-2 text-sm font-black text-stone-900">
-                      ${plot.price.toLocaleString('en-US')}
+                    <div className="mt-2 text-sm font-black text-stone-900" suppressHydrationWarning>
+                      {formatCurrency(plot.price)}
                     </div>
                   </button>
                 );
@@ -320,8 +321,8 @@ export default function VentureLayoutExplorer() {
             </div>
 
             <div className="text-right shrink-0">
-              <div className="text-xl font-black text-stone-900">
-                ${selectedPlot.price.toLocaleString('en-US')}
+              <div className="text-xl font-black text-stone-900" suppressHydrationWarning>
+                {formatCurrency(selectedPlot.price)}
               </div>
               <div className="text-[11px] text-stone-400 font-medium">
                 ${(selectedPlot.price / selectedPlot.sqft).toFixed(2)} / sq ft
@@ -333,7 +334,7 @@ export default function VentureLayoutExplorer() {
           <div className="bg-white rounded-xl p-3.5 border border-stone-200/70 space-y-2 text-xs">
             <div className="flex justify-between py-1 border-b border-stone-100 gap-2">
               <span className="text-stone-500 shrink-0">Total Area:</span>
-              <span className="font-bold text-stone-900 truncate">{selectedPlot.sqft.toLocaleString('en-US')} sq ft</span>
+              <span className="font-bold text-stone-900 truncate" suppressHydrationWarning>{formatNumber(selectedPlot.sqft)} sq ft</span>
             </div>
             <div className="flex justify-between py-1 border-b border-stone-100 gap-2">
               <span className="text-stone-500 shrink-0">Road Frontage:</span>

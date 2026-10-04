@@ -1,23 +1,22 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useApp } from '@/lib/store';
 import {
   Maximize2,
   Minimize2,
   Pencil,
   RotateCcw,
-  Eye,
   Navigation,
   Search,
   ZoomIn,
   ZoomOut,
   X,
   ArrowRight,
-  MapPin,
   CheckCircle2
 } from 'lucide-react';
 import { Property } from '@/types';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 
 type MapLayerType = 'hybrid' | 'satellite' | 'roadmap';
 
@@ -26,9 +25,8 @@ export default function GoogleMapGIS() {
     properties,
     selectedProperty,
     setSelectedProperty,
-    setIsDealModalOpen,
     setIsDetailModalOpen,
-    activeChannel
+    setIsDealModalOpen
   } = useApp();
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -38,6 +36,8 @@ export default function GoogleMapGIS() {
   const polygonLayerRef = useRef<any>(null);
   const markersGroupRef = useRef<any>(null);
   const drawingLayerRef = useRef<any>(null);
+  const isInitializingRef = useRef<boolean>(false);
+  const isInvalidatingRef = useRef<boolean>(false);
 
   const [mapType, setMapType] = useState<MapLayerType>('hybrid');
   const [zoomLevel, setZoomLevel] = useState<number>(17);
@@ -64,251 +64,310 @@ export default function GoogleMapGIS() {
     }
   };
 
-  // 1. Initialize Leaflet Map
+  // Safe guarded map invalidateSize to prevent infinite ResizeObserver loops
+  const safeInvalidateSize = useCallback(() => {
+    if (isInvalidatingRef.current) return;
+    if (!mapInstanceRef.current || !mapContainerRef.current) return;
+    if (mapContainerRef.current.offsetWidth === 0 || mapContainerRef.current.offsetHeight === 0) return;
+
+    isInvalidatingRef.current = true;
+    try {
+      mapInstanceRef.current.invalidateSize({ pan: false });
+    } catch (err) {
+      console.warn('safeInvalidateSize warning:', err);
+    } finally {
+      setTimeout(() => {
+        isInvalidatingRef.current = false;
+      }, 150);
+    }
+  }, []);
+
+  // 1. Initialize Leaflet Map safely
   useEffect(() => {
     let isMounted = true;
 
     const initMap = async () => {
-      if (!mapContainerRef.current || mapInstanceRef.current) return;
-      const L = await import('leaflet');
-      if (!isMounted || !mapContainerRef.current) return;
+      if (!mapContainerRef.current || mapInstanceRef.current || isInitializingRef.current) return;
+      isInitializingRef.current = true;
 
-      const map = L.map(mapContainerRef.current, {
-        center: [centerLat, centerLng],
-        zoom: zoomLevel,
-        zoomControl: false,
-        attributionControl: false,
-        dragging: true,
-        scrollWheelZoom: true,
-        doubleClickZoom: true,
-        touchZoom: true
-      });
+      try {
+        const L = await import('leaflet');
+        if (!isMounted || !mapContainerRef.current || mapInstanceRef.current) {
+          isInitializingRef.current = false;
+          return;
+        }
 
-      mapInstanceRef.current = map;
+        // Clean up any stale leaflet ID to prevent "Map container is already initialized" crash
+        if ((mapContainerRef.current as any)._leaflet_id) {
+          try {
+            delete (mapContainerRef.current as any)._leaflet_id;
+          } catch {}
+        }
 
-      const tileUrl = getGoogleTileUrl(mapType);
-      const tileLayer = L.tileLayer(tileUrl, {
-        subdomains: ['0', '1', '2', '3'],
-        maxZoom: 21,
-        maxNativeZoom: 20
-      }).addTo(map);
+        const map = L.map(mapContainerRef.current, {
+          center: [centerLat, centerLng],
+          zoom: zoomLevel,
+          zoomControl: false,
+          attributionControl: false,
+          dragging: true,
+          scrollWheelZoom: true,
+          doubleClickZoom: true,
+          touchZoom: true
+        });
 
-      activeTileLayerRef.current = tileLayer;
-      polygonLayerRef.current = L.layerGroup().addTo(map);
-      markersGroupRef.current = L.layerGroup().addTo(map);
-      drawingLayerRef.current = L.layerGroup().addTo(map);
+        mapInstanceRef.current = map;
 
-      map.on('zoomend', () => {
-        setZoomLevel(map.getZoom());
-      });
+        const tileUrl = getGoogleTileUrl(mapType);
+        const tileLayer = L.tileLayer(tileUrl, {
+          subdomains: ['0', '1', '2', '3'],
+          maxZoom: 21,
+          maxNativeZoom: 20
+        }).addTo(map);
 
-      map.on('click', (e: any) => {
-        if (!isDrawingMode) return;
-        setDrawnPoints(prev => [...prev, [e.latlng.lat, e.latlng.lng]]);
-      });
+        activeTileLayerRef.current = tileLayer;
+        polygonLayerRef.current = L.layerGroup().addTo(map);
+        markersGroupRef.current = L.layerGroup().addTo(map);
+        drawingLayerRef.current = L.layerGroup().addTo(map);
 
-      // Force Leaflet tile engine to detect mobile screen dimensions
-      setTimeout(() => {
-        if (map) map.invalidateSize();
-      }, 100);
-      setTimeout(() => {
-        if (map) map.invalidateSize();
-      }, 400);
+        map.on('zoomend', () => {
+          if (isMounted) setZoomLevel(map.getZoom());
+        });
 
-      setIsMapReady(true);
+        map.on('click', (e: any) => {
+          if (!isMounted || !isDrawingMode) return;
+          setDrawnPoints(prev => [...prev, [e.latlng.lat, e.latlng.lng]]);
+        });
+
+        // Trigger safe size refresh after mounting
+        setTimeout(() => {
+          if (isMounted) safeInvalidateSize();
+        }, 120);
+
+        if (isMounted) setIsMapReady(true);
+      } catch (err) {
+        console.error('Failed to initialize Leaflet Map:', err);
+      } finally {
+        isInitializingRef.current = false;
+      }
     };
 
     initMap();
 
-    // ResizeObserver ensures map adjusts whenever switched from hidden to visible on mobile
-    let resizeObserver: ResizeObserver | null = null;
-    if (mapContainerRef.current && typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(() => {
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
-        }
-      });
-      resizeObserver.observe(mapContainerRef.current);
-    }
-
-    const handleWindowResize = () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.invalidateSize();
-      }
+    const handleResize = () => {
+      safeInvalidateSize();
     };
 
-    window.addEventListener('resize', handleWindowResize);
-    window.addEventListener('orientationchange', handleWindowResize);
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
 
     return () => {
       isMounted = false;
-      window.removeEventListener('resize', handleWindowResize);
-      window.removeEventListener('orientationchange', handleWindowResize);
-      if (resizeObserver) resizeObserver.disconnect();
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.stop();
+          mapInstanceRef.current.off();
+          mapInstanceRef.current.remove();
+        } catch (err) {
+          console.warn('Map cleanup error:', err);
+        }
         mapInstanceRef.current = null;
       }
+
+      if (mapContainerRef.current) {
+        try {
+          delete (mapContainerRef.current as any)._leaflet_id;
+        } catch {}
+      }
     };
-  }, []);
+  }, [centerLat, centerLng, safeInvalidateSize]);
 
   // 2. Change Tile Layer
   const changeMapType = async (newType: MapLayerType) => {
     setMapType(newType);
     if (!mapInstanceRef.current) return;
-    const L = await import('leaflet');
-
-    if (activeTileLayerRef.current) {
-      mapInstanceRef.current.removeLayer(activeTileLayerRef.current);
+    try {
+      const L = await import('leaflet');
+      if (activeTileLayerRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(activeTileLayerRef.current);
+      }
+      const tileUrl = getGoogleTileUrl(newType);
+      const newTileLayer = L.tileLayer(tileUrl, {
+        subdomains: ['0', '1', '2', '3'],
+        maxZoom: 21,
+        maxNativeZoom: 20
+      }).addTo(mapInstanceRef.current);
+      activeTileLayerRef.current = newTileLayer;
+    } catch (err) {
+      console.warn('Error changing tile layer:', err);
     }
-
-    const tileUrl = getGoogleTileUrl(newType);
-    const newTileLayer = L.tileLayer(tileUrl, {
-      subdomains: ['0', '1', '2', '3'],
-      maxZoom: 21,
-      maxNativeZoom: 20
-    }).addTo(mapInstanceRef.current);
-
-    activeTileLayerRef.current = newTileLayer;
   };
 
-  // 3. Auto-Fly to Property whenever selectedProperty changes (from list click, channel switch, or pin click)
+  // 3. Auto-Fly to Property whenever selectedProperty changes
   useEffect(() => {
     if (!isMapReady || !mapInstanceRef.current || !selectedProperty) return;
-    mapInstanceRef.current.invalidateSize();
-    mapInstanceRef.current.flyTo(
-      [selectedProperty.location.lat, selectedProperty.location.lng],
-      17,
-      { duration: 1.2 }
-    );
-  }, [selectedProperty?.id, isMapReady]);
+    try {
+      safeInvalidateSize();
+      mapInstanceRef.current.flyTo(
+        [selectedProperty.location.lat, selectedProperty.location.lng],
+        17,
+        { duration: 1.2 }
+      );
+    } catch (err) {
+      console.warn('flyTo error:', err);
+    }
+  }, [selectedProperty?.id, isMapReady, safeInvalidateSize]);
 
-  // 4. Render Clean Land Boundary Outline (NO ft measurements or text clutter)
+  // 4. Render Clean Land Boundary Outline (Pure geometry, royal blue, zero text clutter)
   useEffect(() => {
     if (!isMapReady || !mapInstanceRef.current || !polygonLayerRef.current) return;
 
+    let isMounted = true;
     const renderSelectedBoundary = async () => {
-      const L = await import('leaflet');
-      polygonLayerRef.current.clearLayers();
+      try {
+        const L = await import('leaflet');
+        if (!isMounted || !polygonLayerRef.current) return;
+        polygonLayerRef.current.clearLayers();
 
-      if (!selectedProperty) return;
-      const boundary = selectedProperty.boundary;
-      if (!boundary || boundary.length < 3) return;
+        if (!selectedProperty) return;
+        const boundary = selectedProperty.boundary;
+        if (!boundary || boundary.length < 3) return;
 
-      const latLngs: [number, number][] = boundary.map(p => [p.lat, p.lng]);
+        const latLngs: [number, number][] = boundary.map(p => [p.lat, p.lng]);
 
-      // Clean, elegant cadastral land outline (Pure geometry with zero ft text clutter)
-      L.polygon(latLngs, {
-        color: '#2563eb', // Royal Blue outline
-        weight: 3.5,
-        opacity: 0.95,
-        fillColor: '#3b82f6',
-        fillOpacity: 0.2
-      }).addTo(polygonLayerRef.current);
+        L.polygon(latLngs, {
+          color: '#2563eb', // Royal Blue outline
+          weight: 3.5,
+          opacity: 0.95,
+          fillColor: '#3b82f6',
+          fillOpacity: 0.2
+        }).addTo(polygonLayerRef.current);
 
-      // Subtle dashed perimeter highlight
-      L.polygon(latLngs, {
-        color: '#ffffff',
-        weight: 1.5,
-        opacity: 0.8,
-        fillColor: 'transparent',
-        dashArray: '6, 6'
-      }).addTo(polygonLayerRef.current);
+        L.polygon(latLngs, {
+          color: '#ffffff',
+          weight: 1.5,
+          opacity: 0.8,
+          fillColor: 'transparent',
+          dashArray: '6, 6'
+        }).addTo(polygonLayerRef.current);
+      } catch (err) {
+        console.warn('renderSelectedBoundary error:', err);
+      }
     };
 
     renderSelectedBoundary();
+    return () => {
+      isMounted = false;
+    };
   }, [isMapReady, selectedProperty]);
 
-  // 5. Render Property Pins Showing ONLY PROPERTY NAME (No text overflow / auto sizing)
+  // 5. Render Property Pins Showing ONLY Property Name
   useEffect(() => {
     if (!isMapReady || !mapInstanceRef.current || !markersGroupRef.current) return;
 
+    let isMounted = true;
     const renderAllPins = async () => {
-      const L = await import('leaflet');
-      markersGroupRef.current.clearLayers();
+      try {
+        const L = await import('leaflet');
+        if (!isMounted || !markersGroupRef.current) return;
+        markersGroupRef.current.clearLayers();
 
-      properties.forEach(prop => {
-        const isSelected = selectedProperty?.id === prop.id;
-        const shortName = prop.title.split('(')[0].trim();
+        properties.forEach(prop => {
+          const isSelected = selectedProperty?.id === prop.id;
+          const shortName = prop.title.split('(')[0].trim();
 
-        // Zero-size wrapper with transform translate(-50%, -50%) prevents ANY text overflow
-        const pinIcon = L.divIcon({
-          className: 'property-name-pin-container',
-          html: `<div style="display:inline-flex; width:max-content; transform:translate(-50%, -50%); cursor:pointer;">
-                  <div style="background:${isSelected ? '#0f172a' : '#ffffff'}; color:${isSelected ? '#ffffff' : '#0f172a'}; font-size:11px; font-weight:700; padding:6px 14px; border-radius:9999px; box-shadow:0 6px 20px rgba(0,0,0,0.18); border:1.5px solid ${isSelected ? '#0f172a' : '#e2e8f0'}; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s ease;">
-                    <span style="font-size:12px;">📍</span>
-                    <span>${shortName}</span>
-                  </div>
-                 </div>`,
-          iconSize: [0, 0],
-          iconAnchor: [0, 0]
+          const pinIcon = L.divIcon({
+            className: 'property-name-pin-container',
+            html: `<div style="display:inline-flex; width:max-content; transform:translate(-50%, -50%); cursor:pointer;">
+                    <div style="background:${isSelected ? '#0f172a' : '#ffffff'}; color:${isSelected ? '#ffffff' : '#0f172a'}; font-size:11px; font-weight:700; padding:6px 14px; border-radius:9999px; box-shadow:0 6px 20px rgba(0,0,0,0.18); border:1.5px solid ${isSelected ? '#0f172a' : '#e2e8f0'}; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s ease;">
+                      <span style="font-size:12px;">📍</span>
+                      <span>${shortName}</span>
+                    </div>
+                   </div>`,
+            iconSize: [0, 0],
+            iconAnchor: [0, 0]
+          });
+
+          const marker = L.marker([prop.location.lat, prop.location.lng], { icon: pinIcon });
+          marker.on('click', () => {
+            setSelectedProperty(prop);
+          });
+
+          marker.addTo(markersGroupRef.current);
         });
-
-        const marker = L.marker([prop.location.lat, prop.location.lng], { icon: pinIcon });
-
-        // When clicking property name pin: select property & fly to it
-        marker.on('click', () => {
-          setSelectedProperty(prop);
-        });
-
-        marker.addTo(markersGroupRef.current);
-      });
+      } catch (err) {
+        console.warn('renderAllPins error:', err);
+      }
     };
 
     renderAllPins();
-  }, [isMapReady, properties, selectedProperty]);
+    return () => {
+      isMounted = false;
+    };
+  }, [isMapReady, properties, selectedProperty, setSelectedProperty]);
 
   // 6. Drawing Mode
   useEffect(() => {
     if (!isMapReady || !drawingLayerRef.current) return;
 
+    let isMounted = true;
     const updateDrawing = async () => {
-      const L = await import('leaflet');
-      drawingLayerRef.current.clearLayers();
+      try {
+        const L = await import('leaflet');
+        if (!isMounted || !drawingLayerRef.current) return;
+        drawingLayerRef.current.clearLayers();
 
-      if (drawnPoints.length === 0) {
-        setCalculatedAreaSqft(0);
-        return;
-      }
-
-      drawnPoints.forEach(pt => {
-        const vertexIcon = L.divIcon({
-          className: 'drawing-vertex',
-          html: `<div style="width:12px; height:12px; background:#0f172a; border:2px solid #ffffff; border-radius:50%; box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
-          iconSize: [12, 12],
-          iconAnchor: [6, 6]
-        });
-        L.marker(pt, { icon: vertexIcon }).addTo(drawingLayerRef.current);
-      });
-
-      if (drawnPoints.length === 2) {
-        L.polyline(drawnPoints, { color: '#0f172a', weight: 2.5, dashArray: '4,4' }).addTo(drawingLayerRef.current);
-      } else if (drawnPoints.length >= 3) {
-        L.polygon(drawnPoints, {
-          color: '#2563eb',
-          weight: 2.5,
-          fillColor: '#3b82f6',
-          fillOpacity: 0.25
-        }).addTo(drawingLayerRef.current);
-
-        const avgLatRad = (drawnPoints.reduce((acc, p) => acc + p[0], 0) / drawnPoints.length) * (Math.PI / 180);
-        const latScale = 364000;
-        const lngScale = 364000 * Math.cos(avgLatRad);
-
-        let area = 0;
-        for (let i = 0; i < drawnPoints.length; i++) {
-          const j = (i + 1) % drawnPoints.length;
-          const xi = drawnPoints[i][1] * lngScale;
-          const yi = drawnPoints[i][0] * latScale;
-          const xj = drawnPoints[j][1] * lngScale;
-          const yj = drawnPoints[j][0] * latScale;
-          area += xi * yj - xj * yi;
+        if (drawnPoints.length === 0) {
+          setCalculatedAreaSqft(0);
+          return;
         }
-        setCalculatedAreaSqft(Math.round(Math.abs(area) / 2));
+
+        drawnPoints.forEach(pt => {
+          const vertexIcon = L.divIcon({
+            className: 'drawing-vertex',
+            html: `<div style="width:12px; height:12px; background:#0f172a; border:2px solid #ffffff; border-radius:50%; box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+          });
+          L.marker(pt, { icon: vertexIcon }).addTo(drawingLayerRef.current);
+        });
+
+        if (drawnPoints.length === 2) {
+          L.polyline(drawnPoints, { color: '#0f172a', weight: 2.5, dashArray: '4,4' }).addTo(drawingLayerRef.current);
+        } else if (drawnPoints.length >= 3) {
+          L.polygon(drawnPoints, {
+            color: '#2563eb',
+            weight: 2.5,
+            fillColor: '#3b82f6',
+            fillOpacity: 0.25
+          }).addTo(drawingLayerRef.current);
+
+          const avgLatRad = (drawnPoints.reduce((acc, p) => acc + p[0], 0) / drawnPoints.length) * (Math.PI / 180);
+          const latScale = 364000;
+          const lngScale = 364000 * Math.cos(avgLatRad);
+
+          let area = 0;
+          for (let i = 0; i < drawnPoints.length; i++) {
+            const j = (i + 1) % drawnPoints.length;
+            const xi = drawnPoints[i][1] * lngScale;
+            const yi = drawnPoints[i][0] * latScale;
+            const xj = drawnPoints[j][1] * lngScale;
+            const yj = drawnPoints[j][0] * latScale;
+            area += xi * yj - xj * yi;
+          }
+          setCalculatedAreaSqft(Math.round(Math.abs(area) / 2));
+        }
+      } catch (err) {
+        console.warn('updateDrawing error:', err);
       }
     };
 
     updateDrawing();
+    return () => {
+      isMounted = false;
+    };
   }, [drawnPoints, isMapReady]);
 
   // Search
@@ -332,7 +391,8 @@ export default function GoogleMapGIS() {
         else mapInstanceRef.current.flyTo([37.7749, -122.4194], 16);
       }
     } catch {
-      // fallback
+      // fallback safe flyTo
+      mapInstanceRef.current.flyTo([37.7749, -122.4194], 16);
     } finally {
       setIsSearching(false);
     }
@@ -342,7 +402,9 @@ export default function GoogleMapGIS() {
     if (navigator.geolocation && mapInstanceRef.current) {
       navigator.geolocation.getCurrentPosition(
         pos => {
-          mapInstanceRef.current.flyTo([pos.coords.latitude, pos.coords.longitude], 18, { duration: 1.4 });
+          try {
+            mapInstanceRef.current.flyTo([pos.coords.latitude, pos.coords.longitude], 18, { duration: 1.4 });
+          } catch {}
         },
         () => alert('Could not get GPS location.')
       );
@@ -467,7 +529,7 @@ export default function GoogleMapGIS() {
             }}
             className={`p-2.5 rounded-xl transition ${
               isDrawingMode
-                ? 'bg-amber-500 text-stone-950 font-bold'
+                ? 'bg-blue-600 text-white shadow-xs'
                 : 'hover:bg-stone-100 text-stone-700'
             }`}
             title="Measure / Draw Boundary"
@@ -486,7 +548,7 @@ export default function GoogleMapGIS() {
 
       </div>
 
-      {/* DRAWING MODE HUD BANNER */}
+      {/* DRAWING / MEASURING HUD OVERLAY */}
       {isDrawingMode && (
         <div className="relative z-10 mx-3 sm:mx-4 bg-white/95 backdrop-blur-xl border border-amber-300 rounded-2xl p-3 text-stone-900 text-xs flex flex-wrap items-center justify-between gap-3 shadow-lg">
           <div className="flex items-center gap-2">
@@ -496,7 +558,9 @@ export default function GoogleMapGIS() {
 
           <div className="flex items-center gap-3 font-mono font-semibold text-xs">
             <span>Corners: <b>{drawnPoints.length}</b></span>
-            <span>Area: <b className="text-emerald-700">{calculatedAreaSqft.toLocaleString('en-US')} sq ft</b> ({calculatedAcres} ac)</span>
+            <span>
+              Area: <b className="text-emerald-700">{formatNumber(calculatedAreaSqft)} sq ft</b> ({calculatedAcres} ac)
+            </span>
             {drawnPoints.length > 0 && (
               <button
                 onClick={() => setDrawnPoints([])}
@@ -508,7 +572,7 @@ export default function GoogleMapGIS() {
             {drawnPoints.length >= 3 && (
               <button
                 onClick={() => {
-                  alert(`Boundary recorded: ${calculatedAreaSqft.toLocaleString('en-US')} sq ft (${calculatedAcres} Acres).`);
+                  alert(`Boundary recorded: ${formatNumber(calculatedAreaSqft)} sq ft (${calculatedAcres} Acres).`);
                   setIsDrawingMode(false);
                 }}
                 className="px-3 py-1 rounded-full bg-stone-900 text-white text-xs font-semibold hover:bg-stone-800"
@@ -520,14 +584,10 @@ export default function GoogleMapGIS() {
         </div>
       )}
 
-      {/* 
-        BOTTOM PROPERTY DETAILS DRAWER (Reveals when property is selected or clicked)
-        Clean, aligned, zero word-overflow layout with thumbnail, title, price, and specs
-      */}
+      {/* BOTTOM PROPERTY DETAILS DRAWER */}
       {selectedProperty && (
         <div className="relative z-10 m-3 sm:m-4 bg-white/95 backdrop-blur-xl p-4 sm:p-5 rounded-[24px] border border-stone-200/80 shadow-[0_12px_40px_rgba(0,0,0,0.12)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs pointer-events-auto animate-in slide-in-from-bottom duration-300">
           
-          {/* Photo Thumbnail & Information with proper min-w-0 */}
           <div className="flex items-center gap-3.5 min-w-0 flex-1">
             <img
               src={selectedProperty.images[0]}
@@ -551,14 +611,13 @@ export default function GoogleMapGIS() {
                 <span>·</span>
                 <span>{selectedProperty.location.city}</span>
                 <span>·</span>
-                <span>{selectedProperty.totalSqft.toLocaleString('en-US')} sq ft</span>
+                <span>{formatNumber(selectedProperty.totalSqft)} sq ft</span>
                 <span>·</span>
-                <span className="font-black text-stone-900">${selectedProperty.price.toLocaleString('en-US')}</span>
+                <span className="font-black text-stone-900">{formatCurrency(selectedProperty.price)}</span>
               </p>
             </div>
           </div>
 
-          {/* Action Pills */}
           <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
             <button
               onClick={() => setIsDetailModalOpen(true)}
@@ -566,7 +625,6 @@ export default function GoogleMapGIS() {
             >
               Full Details
             </button>
-
             <button
               onClick={() => setIsDealModalOpen(true)}
               className="flex-1 sm:flex-none px-5 py-2 rounded-full bg-stone-900 hover:bg-stone-800 text-white font-semibold shadow-xs transition flex items-center justify-center gap-1.5"

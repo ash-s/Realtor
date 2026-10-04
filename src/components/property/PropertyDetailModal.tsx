@@ -17,6 +17,7 @@ import {
   ArrowRight,
   MessageSquare
 } from 'lucide-react';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 
 export default function PropertyDetailModal() {
   const {
@@ -100,11 +101,11 @@ export default function PropertyDetailModal() {
             </div>
 
             <div className="text-left sm:text-right bg-slate-50 p-3 sm:p-0 rounded-xl sm:bg-transparent border sm:border-0 border-slate-200">
-              <div className="text-2xl font-extrabold text-slate-900">
-                ${selectedProperty.price.toLocaleString('en-US')}
+              <div className="text-2xl font-extrabold text-slate-900" suppressHydrationWarning>
+                {formatCurrency(selectedProperty.price)}
               </div>
               <div className="text-xs text-emerald-700 font-bold font-mono">
-                ${selectedProperty.pricePerSqft.toFixed(2)} / sq ft • Total: {selectedProperty.totalSqft.toLocaleString('en-US')} sq ft
+                ${selectedProperty.pricePerSqft.toFixed(2)} / sq ft • Total: {formatNumber(selectedProperty.totalSqft)} sq ft
               </div>
             </div>
           </div>
@@ -113,7 +114,7 @@ export default function PropertyDetailModal() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-center">
               <span className="text-[10px] text-slate-400 font-bold block uppercase">Total Area</span>
-              <span className="text-sm font-bold text-slate-900 mt-0.5 block">{selectedProperty.totalSqft.toLocaleString('en-US')} sq ft</span>
+              <span className="text-sm font-bold text-slate-900 mt-0.5 block" suppressHydrationWarning>{formatNumber(selectedProperty.totalSqft)} sq ft</span>
               <span className="text-[10px] text-slate-500 font-medium">{(selectedProperty.totalSqft / 43560).toFixed(2)} Acres</span>
             </div>
 

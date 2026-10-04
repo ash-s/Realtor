@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Compass
 } from 'lucide-react';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 
 interface PropertyCardProps {
   property: Property;
@@ -86,8 +87,8 @@ export default function PropertyCard({ property, onSelect }: PropertyCardProps) 
           </div>
 
           <div className="text-right shrink-0">
-            <div className="text-base font-black text-stone-900 whitespace-nowrap">
-              ${property.price.toLocaleString('en-US')}
+            <div className="text-base font-black text-stone-900 whitespace-nowrap" suppressHydrationWarning>
+              {formatCurrency(property.price)}
             </div>
             <div className="text-[10px] text-stone-400 font-medium whitespace-nowrap">
               ${property.pricePerSqft.toFixed(2)}/sq ft
@@ -97,7 +98,7 @@ export default function PropertyCard({ property, onSelect }: PropertyCardProps) 
 
         {/* Land Metrics Strip */}
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-stone-500 font-medium pt-1 border-t border-stone-100">
-          <span>{property.totalSqft.toLocaleString('en-US')} sq ft</span>
+          <span suppressHydrationWarning>{formatNumber(property.totalSqft)} sq ft</span>
           <span>·</span>
           <span>{property.roadWidthFt} ft Road</span>
           <span>·</span>
