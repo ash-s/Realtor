@@ -12,8 +12,11 @@ import AddPropertyModal from '@/components/seller/AddPropertyModal';
 import KycModal from '@/components/kyc/KycModal';
 import {
   LayoutGrid,
-  Map as MapIcon
+  Map as MapIcon,
+  Compass,
+  ArrowRight
 } from 'lucide-react';
+import { formatCurrency } from '@/lib/formatters';
 
 export default function Home() {
   const {
@@ -23,10 +26,23 @@ export default function Home() {
     setSelectedProperty,
     searchQuery,
     selectedSubType,
-    setSelectedSubType
+    setSelectedSubType,
+    setIsDetailModalOpen
   } = useApp();
 
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
+
+  const handleSwitchMobileView = (view: 'list' | 'map') => {
+    setMobileView(view);
+    if (view === 'map') {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 80);
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 300);
+    }
+  };
 
   // Filter properties by channel, search, and subtype
   const filteredProperties = properties.filter(prop => {
@@ -134,24 +150,30 @@ export default function Home() {
             </div>
 
             {/* Mobile View Switcher */}
-            <div className="flex sm:hidden w-full bg-stone-100 p-1 rounded-full border border-stone-200 text-xs font-semibold">
+            <div className="flex sm:hidden w-full bg-stone-100 p-1 rounded-full border border-stone-200 text-xs font-bold">
               <button
-                onClick={() => setMobileView('list')}
-                className={`flex-1 py-1.5 rounded-full flex items-center justify-center gap-1 ${
-                  mobileView === 'list' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-600'
+                type="button"
+                onClick={() => handleSwitchMobileView('list')}
+                className={`flex-1 py-2 rounded-full flex items-center justify-center gap-1.5 transition ${
+                  mobileView === 'list'
+                    ? 'bg-stone-900 text-white shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>List</span>
+                <LayoutGrid className="w-4 h-4" />
+                <span>List ({filteredProperties.length})</span>
               </button>
               <button
-                onClick={() => setMobileView('map')}
-                className={`flex-1 py-1.5 rounded-full flex items-center justify-center gap-1 ${
-                  mobileView === 'map' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-600'
+                type="button"
+                onClick={() => handleSwitchMobileView('map')}
+                className={`flex-1 py-2 rounded-full flex items-center justify-center gap-1.5 transition ${
+                  mobileView === 'map'
+                    ? 'bg-stone-900 text-white shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
-                <MapIcon className="w-3.5 h-3.5" />
-                <span>Map</span>
+                <MapIcon className="w-4 h-4 text-emerald-500" />
+                <span>Map & 3D</span>
               </button>
             </div>
           </div>
@@ -173,7 +195,11 @@ export default function Home() {
 
             <div className="space-y-4 max-h-[820px] overflow-y-auto pr-1">
               {filteredProperties.map(property => (
-                <PropertyCard key={property.id} property={property} />
+                <PropertyCard
+                  key={property.id}
+                  property={property}
+                  onSelect={() => handleSwitchMobileView('map')}
+                />
               ))}
 
               {filteredProperties.length === 0 && (
@@ -207,6 +233,55 @@ export default function Home() {
         </div>
 
       </main>
+
+      {/* Mobile Floating Property Card when viewing Map */}
+      {mobileView === 'map' && selectedProperty && (
+        <aside aria-label="Selected Property Preview" className="fixed bottom-20 left-3 right-3 z-30 sm:hidden bg-white/95 backdrop-blur-md border border-stone-200/90 rounded-2xl p-3 shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
+          <img
+            src={selectedProperty.images[0]}
+            alt={selectedProperty.title}
+            className="w-14 h-14 rounded-xl object-cover shrink-0"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {selectedProperty.verification.approvalType}
+              </span>
+              <span className="text-[10px] text-stone-500 font-mono">#{selectedProperty.verification.surveyNumber}</span>
+            </div>
+            <h4 className="text-xs font-bold text-stone-900 truncate mt-0.5">{selectedProperty.title}</h4>
+            <div className="text-xs font-black text-stone-900" suppressHydrationWarning>
+              {formatCurrency(selectedProperty.price)}
+            </div>
+          </div>
+          <button
+            onClick={() => setIsDetailModalOpen(true)}
+            className="px-3 py-2 rounded-xl bg-stone-900 text-white font-bold text-xs shrink-0 shadow-xs"
+          >
+            Specs
+          </button>
+        </aside>
+      )}
+
+      {/* Mobile Floating View Switcher Button (Bottom-Center) */}
+      <aside aria-label="Mobile View Switcher" className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 sm:hidden">
+        <button
+          onClick={() => handleSwitchMobileView(mobileView === 'list' ? 'map' : 'list')}
+          className="px-5 py-2.5 rounded-full bg-stone-900 text-white font-extrabold text-xs shadow-2xl flex items-center gap-2 border border-stone-700/80 active:scale-95 transition-all"
+        >
+          {mobileView === 'list' ? (
+            <>
+              <MapIcon className="w-4 h-4 text-emerald-400" />
+              <span>Explore on Map ({filteredProperties.length})</span>
+            </>
+          ) : (
+            <>
+              <LayoutGrid className="w-4 h-4 text-cyan-400" />
+              <span>View Property List</span>
+            </>
+          )}
+        </button>
+      </aside>
 
       <PropertyDetailModal />
       <CreateDealModal />

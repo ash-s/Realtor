@@ -107,13 +107,44 @@ export default function GoogleMapGIS() {
         setDrawnPoints(prev => [...prev, [e.latlng.lat, e.latlng.lng]]);
       });
 
+      // Force Leaflet tile engine to detect mobile screen dimensions
+      setTimeout(() => {
+        if (map) map.invalidateSize();
+      }, 100);
+      setTimeout(() => {
+        if (map) map.invalidateSize();
+      }, 400);
+
       setIsMapReady(true);
     };
 
     initMap();
 
+    // ResizeObserver ensures map adjusts whenever switched from hidden to visible on mobile
+    let resizeObserver: ResizeObserver | null = null;
+    if (mapContainerRef.current && typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      });
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
+    const handleWindowResize = () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    };
+
+    window.addEventListener('resize', handleWindowResize);
+    window.addEventListener('orientationchange', handleWindowResize);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('resize', handleWindowResize);
+      window.removeEventListener('orientationchange', handleWindowResize);
+      if (resizeObserver) resizeObserver.disconnect();
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -144,6 +175,7 @@ export default function GoogleMapGIS() {
   // 3. Auto-Fly to Property whenever selectedProperty changes (from list click, channel switch, or pin click)
   useEffect(() => {
     if (!isMapReady || !mapInstanceRef.current || !selectedProperty) return;
+    mapInstanceRef.current.invalidateSize();
     mapInstanceRef.current.flyTo(
       [selectedProperty.location.lat, selectedProperty.location.lng],
       17,

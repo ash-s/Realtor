@@ -8,14 +8,16 @@ import {
   CheckCircle2,
   TreePine,
   Building2,
-  ArrowRight
+  ArrowRight,
+  Compass
 } from 'lucide-react';
 
 interface PropertyCardProps {
   property: Property;
+  onSelect?: () => void;
 }
 
-export default function PropertyCard({ property }: PropertyCardProps) {
+export default function PropertyCard({ property, onSelect }: PropertyCardProps) {
   const { selectedProperty, setSelectedProperty, setIsDetailModalOpen, setIsDealModalOpen } = useApp();
 
   const isSelected = selectedProperty?.id === property.id;
@@ -23,7 +25,10 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
   return (
     <div
-      onClick={() => setSelectedProperty(property)}
+      onClick={() => {
+        setSelectedProperty(property);
+        if (onSelect) onSelect();
+      }}
       className={`group relative rounded-[24px] bg-white border transition-all duration-300 overflow-hidden cursor-pointer ${
         isSelected
           ? 'border-stone-900 ring-2 ring-stone-900/10 shadow-[0_12px_32px_rgba(0,0,0,0.08)]'
@@ -100,8 +105,23 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 pt-2 border-t border-stone-100">
+        <div className="flex items-center gap-1.5 pt-2 border-t border-stone-100">
           <button
+            type="button"
+            onClick={e => {
+              e.stopPropagation();
+              setSelectedProperty(property);
+              if (onSelect) onSelect();
+            }}
+            className="py-2 px-3 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold transition flex items-center justify-center gap-1"
+            title="View on Google Map"
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>Map</span>
+          </button>
+
+          <button
+            type="button"
             onClick={e => {
               e.stopPropagation();
               setSelectedProperty(property);
@@ -113,6 +133,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           </button>
 
           <button
+            type="button"
             onClick={e => {
               e.stopPropagation();
               setSelectedProperty(property);

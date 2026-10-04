@@ -10,7 +10,13 @@ export default function RoleSwitcherDock() {
   const router = useRouter();
   const pathname = usePathname();
   const { currentUser, login, setIsContactModalOpen, setContactProperty } = useApp();
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      setIsExpanded(true);
+    }
+  }, []);
 
   // Don't show inside login page
   if (pathname === '/login') return null;
