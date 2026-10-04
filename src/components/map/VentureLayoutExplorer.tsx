@@ -16,7 +16,11 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/formatters';
 
-export default function VentureLayoutExplorer() {
+interface VentureLayoutExplorerProps {
+  onBackToMap?: () => void;
+}
+
+export default function VentureLayoutExplorer({ onBackToMap }: VentureLayoutExplorerProps = {}) {
   const { selectedProperty, selectedVenturePlotId, setSelectedVenturePlotId, setIsDealModalOpen } = useApp();
   const [filterFacing, setFilterFacing] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -47,12 +51,20 @@ export default function VentureLayoutExplorer() {
   const southRowPlots = plots.slice(8, 16);
 
   return (
-    <div className="bg-white border border-stone-200/80 rounded-[28px] p-5 sm:p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-6">
+    <div className="bg-white border border-stone-200/80 rounded-[28px] p-4 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-5 h-full overflow-y-auto">
       
       {/* Header & View Mode Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-stone-100 gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
+            {onBackToMap && (
+              <button
+                onClick={onBackToMap}
+                className="text-xs font-bold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 px-3 py-1 rounded-full transition flex items-center gap-1 shrink-0"
+              >
+                <span>← Map</span>
+              </button>
+            )}
             <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase tracking-wider shrink-0">
               Sanctioned Masterplan
             </span>

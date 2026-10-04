@@ -16,9 +16,10 @@ import { formatCurrency, formatNumber } from '@/lib/formatters';
 interface PropertyCardProps {
   property: Property;
   onSelect?: () => void;
+  onSelectMasterplan?: () => void;
 }
 
-export default function PropertyCard({ property, onSelect }: PropertyCardProps) {
+export default function PropertyCard({ property, onSelect, onSelectMasterplan }: PropertyCardProps) {
   const { selectedProperty, setSelectedProperty, setIsDetailModalOpen, setIsDealModalOpen } = useApp();
 
   const isSelected = selectedProperty?.id === property.id;
@@ -32,7 +33,7 @@ export default function PropertyCard({ property, onSelect }: PropertyCardProps) 
       }}
       className={`group relative rounded-[24px] bg-white border transition-all duration-300 overflow-hidden cursor-pointer ${
         isSelected
-          ? 'border-stone-900 ring-2 ring-stone-900/10 shadow-[0_12px_32px_rgba(0,0,0,0.08)]'
+          ? 'border-blue-600 ring-2 ring-blue-600/20 shadow-[0_12px_32px_rgba(37,99,235,0.12)] scale-[1.01]'
           : 'border-stone-200/80 hover:border-stone-300 shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]'
       }`}
     >
@@ -114,12 +115,29 @@ export default function PropertyCard({ property, onSelect }: PropertyCardProps) 
               setSelectedProperty(property);
               if (onSelect) onSelect();
             }}
-            className="py-2 px-3 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold transition flex items-center justify-center gap-1"
+            className={`py-2 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1 ${
+              isSelected ? 'bg-blue-600 text-white shadow-xs' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+            }`}
             title="View on Google Map"
           >
             <Compass className="w-3.5 h-3.5" />
             <span>Map</span>
           </button>
+
+          {property.isVentureLayout && onSelectMasterplan && (
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation();
+                setSelectedProperty(property);
+                onSelectMasterplan();
+              }}
+              className="py-2 px-2.5 rounded-full bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition flex items-center justify-center gap-1 border border-emerald-200/80"
+              title="Inspect Plotted Masterplan"
+            >
+              <span>Plots</span>
+            </button>
+          )}
 
           <button
             type="button"

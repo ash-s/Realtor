@@ -13,14 +13,27 @@ import {
   ZoomOut,
   X,
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Property } from '@/types';
 import { formatCurrency, formatNumber } from '@/lib/formatters';
 
 type MapLayerType = 'hybrid' | 'satellite' | 'roadmap';
 
-export default function GoogleMapGIS() {
+interface GoogleMapGISProps {
+  showBottomDrawer?: boolean;
+  onToggleSidebar?: () => void;
+  isSidebarOpen?: boolean;
+}
+
+export default function GoogleMapGIS({
+  showBottomDrawer = false,
+  onToggleSidebar,
+  isSidebarOpen = true
+}: GoogleMapGISProps) {
   const {
     properties,
     selectedProperty,
@@ -64,7 +77,7 @@ export default function GoogleMapGIS() {
     }
   };
 
-  // Safe guarded map invalidateSize to prevent infinite ResizeObserver loops
+  // Safe guarded map invalidateSize to prevent infinite loops
   const safeInvalidateSize = useCallback(() => {
     if (isInvalidatingRef.current) return;
     if (!mapInstanceRef.current || !mapContainerRef.current) return;
@@ -138,7 +151,6 @@ export default function GoogleMapGIS() {
           setDrawnPoints(prev => [...prev, [e.latlng.lat, e.latlng.lng]]);
         });
 
-        // Trigger safe size refresh after mounting
         setTimeout(() => {
           if (isMounted) safeInvalidateSize();
         }, 120);
@@ -220,7 +232,7 @@ export default function GoogleMapGIS() {
     }
   }, [selectedProperty?.id, isMapReady, safeInvalidateSize]);
 
-  // 4. Render Clean Land Boundary Outline (Pure geometry, royal blue, zero text clutter)
+  // 4. Render Clean Land Boundary Outline (Pure royal blue geometry, zero clutter)
   useEffect(() => {
     if (!isMapReady || !mapInstanceRef.current || !polygonLayerRef.current) return;
 
@@ -263,7 +275,7 @@ export default function GoogleMapGIS() {
     };
   }, [isMapReady, selectedProperty]);
 
-  // 5. Render Property Pins Showing ONLY Property Name
+  // 5. Render Minimalist Luxury Price-Tag Pins (Inspired by Airbnb / Compass Luxury)
   useEffect(() => {
     if (!isMapReady || !mapInstanceRef.current || !markersGroupRef.current) return;
 
@@ -276,16 +288,35 @@ export default function GoogleMapGIS() {
 
         properties.forEach(prop => {
           const isSelected = selectedProperty?.id === prop.id;
-          const shortName = prop.title.split('(')[0].trim();
+          const formattedPrice = formatCurrency(prop.price);
 
           const pinIcon = L.divIcon({
-            className: 'property-name-pin-container',
-            html: `<div style="display:inline-flex; width:max-content; transform:translate(-50%, -50%); cursor:pointer;">
-                    <div style="background:${isSelected ? '#0f172a' : '#ffffff'}; color:${isSelected ? '#ffffff' : '#0f172a'}; font-size:11px; font-weight:700; padding:6px 14px; border-radius:9999px; box-shadow:0 6px 20px rgba(0,0,0,0.18); border:1.5px solid ${isSelected ? '#0f172a' : '#e2e8f0'}; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s ease;">
-                      <span style="font-size:12px;">📍</span>
-                      <span>${shortName}</span>
-                    </div>
-                   </div>`,
+            className: 'luxury-price-pin',
+            html: `
+              <div style="display:inline-flex; transform:translate(-50%, -50%); cursor:pointer; pointer-events:auto;">
+                <div style="
+                  background:${isSelected ? '#0f172a' : 'rgba(255, 255, 255, 0.96)'};
+                  backdrop-filter:blur(10px);
+                  color:${isSelected ? '#ffffff' : '#0f172a'};
+                  padding:${isSelected ? '6px 14px' : '5px 12px'};
+                  font-size:${isSelected ? '12px' : '11px'};
+                  font-weight:800;
+                  font-family:ui-sans-serif, system-ui, -apple-system, sans-serif;
+                  border-radius:9999px;
+                  box-shadow:${isSelected ? '0 10px 28px rgba(0,0,0,0.32)' : '0 4px 18px rgba(0,0,0,0.12)'};
+                  border:${isSelected ? '2px solid #3b82f6' : '1.5px solid rgba(226, 232, 240, 0.95)'};
+                  display:flex;
+                  align-items:center;
+                  gap:6px;
+                  white-space:nowrap;
+                  transform:${isSelected ? 'scale(1.08)' : 'scale(1)'};
+                  transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                ">
+                  <span style="width:7px; height:7px; border-radius:50%; background:${isSelected ? '#38bdf8' : '#10b981'}; display:inline-block; flex-shrink:0;"></span>
+                  <span>${formattedPrice}</span>
+                </div>
+              </div>
+            `,
             iconSize: [0, 0],
             iconAnchor: [0, 0]
           });
@@ -391,7 +422,6 @@ export default function GoogleMapGIS() {
         else mapInstanceRef.current.flyTo([37.7749, -122.4194], 16);
       }
     } catch {
-      // fallback safe flyTo
       mapInstanceRef.current.flyTo([37.7749, -122.4194], 16);
     } finally {
       setIsSearching(false);
@@ -427,8 +457,8 @@ export default function GoogleMapGIS() {
   return (
     <div
       ref={mapWrapperRef}
-      className={`relative w-full rounded-[28px] overflow-hidden bg-stone-100 border border-stone-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col justify-between select-none transition-all ${
-        isFullscreen ? 'h-screen w-screen rounded-none border-0' : 'h-[500px] sm:h-[600px] lg:h-[680px]'
+      className={`relative w-full h-full rounded-[28px] overflow-hidden bg-stone-100 border border-stone-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col justify-between select-none transition-all ${
+        isFullscreen ? 'h-screen w-screen rounded-none border-0' : ''
       }`}
     >
       {/* Real Movable Leaflet Canvas */}
@@ -440,42 +470,65 @@ export default function GoogleMapGIS() {
       {/* TOP FLOATING ISLAND BAR */}
       <div className="relative z-10 p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5 pointer-events-none">
         
-        {/* Search Input Floating Pill */}
-        <form
-          onSubmit={handleLocationSearch}
-          className="pointer-events-auto flex items-center bg-white/90 backdrop-blur-xl rounded-full border border-stone-200/70 shadow-[0_6px_24px_rgba(0,0,0,0.08)] px-3.5 py-2 w-full max-w-xs sm:max-w-sm transition-all focus-within:shadow-[0_8px_28px_rgba(0,0,0,0.12)]"
-        >
-          <Search className="w-4 h-4 text-stone-400 shrink-0" />
-          <input
-            type="text"
-            value={searchLocation}
-            onChange={e => setSearchLocation(e.target.value)}
-            placeholder="Search address or area..."
-            className="w-full bg-transparent px-2.5 text-xs text-stone-900 placeholder-stone-400 focus:outline-none font-medium"
-          />
-          {searchLocation && (
+        {/* Left Side: Sidebar Toggle (if available) + Search Pill */}
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {onToggleSidebar && (
             <button
-              type="button"
-              onClick={() => setSearchLocation('')}
-              className="p-1 rounded-full text-stone-400 hover:text-stone-700 mr-1"
+              onClick={onToggleSidebar}
+              className="hidden lg:flex items-center gap-1.5 bg-white/95 backdrop-blur-xl px-3 py-2 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-xs font-bold text-stone-800 hover:bg-stone-50 transition"
+              title={isSidebarOpen ? 'Collapse Property List' : 'Show Property List'}
             >
-              <X className="w-3.5 h-3.5" />
+              {isSidebarOpen ? (
+                <>
+                  <ChevronLeft className="w-4 h-4 text-stone-500" />
+                  <span className="text-[11px]">Full Map</span>
+                </>
+              ) : (
+                <>
+                  <ChevronRight className="w-4 h-4 text-stone-500" />
+                  <span className="text-[11px]">Show Feed</span>
+                </>
+              )}
             </button>
           )}
-          <button
-            type="submit"
-            disabled={isSearching}
-            className="px-3 py-1 rounded-full bg-stone-900 text-white font-semibold text-xs transition hover:bg-stone-800 shrink-0"
-          >
-            {isSearching ? '...' : 'Go'}
-          </button>
-        </form>
 
-        {/* Map Layer Mode Switcher Pill */}
-        <div className="pointer-events-auto flex items-center gap-1 bg-white/90 backdrop-blur-xl p-1 rounded-full border border-stone-200/70 shadow-[0_6px_24px_rgba(0,0,0,0.08)] text-xs font-semibold text-stone-700">
+          {/* Search Input Floating Pill */}
+          <form
+            onSubmit={handleLocationSearch}
+            className="flex items-center bg-white/95 backdrop-blur-xl rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] px-3 py-1.5 w-44 sm:w-64 transition-all focus-within:w-56 sm:focus-within:w-72"
+          >
+            <Search className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+            <input
+              type="text"
+              value={searchLocation}
+              onChange={e => setSearchLocation(e.target.value)}
+              placeholder="Search area..."
+              className="w-full bg-transparent px-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none font-medium"
+            />
+            {searchLocation && (
+              <button
+                type="button"
+                onClick={() => setSearchLocation('')}
+                className="p-0.5 rounded-full text-stone-400 hover:text-stone-700 mr-1"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={isSearching}
+              className="px-2.5 py-0.5 rounded-full bg-stone-900 text-white font-semibold text-[11px] transition hover:bg-stone-800 shrink-0"
+            >
+              {isSearching ? '...' : 'Go'}
+            </button>
+          </form>
+        </div>
+
+        {/* Right Side: Map Layer Mode Switcher Pill */}
+        <div className="pointer-events-auto flex items-center gap-1 bg-white/95 backdrop-blur-xl p-1 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-xs font-semibold text-stone-700">
           <button
             onClick={() => changeMapType('hybrid')}
-            className={`px-3 py-1.5 rounded-full transition ${
+            className={`px-3 py-1 rounded-full text-[11px] transition ${
               mapType === 'hybrid' ? 'bg-stone-900 text-white shadow-xs' : 'hover:bg-stone-100 text-stone-600'
             }`}
           >
@@ -483,7 +536,7 @@ export default function GoogleMapGIS() {
           </button>
           <button
             onClick={() => changeMapType('roadmap')}
-            className={`px-3 py-1.5 rounded-full transition ${
+            className={`px-3 py-1 rounded-full text-[11px] transition ${
               mapType === 'roadmap' ? 'bg-stone-900 text-white shadow-xs' : 'hover:bg-stone-100 text-stone-600'
             }`}
           >
@@ -494,29 +547,29 @@ export default function GoogleMapGIS() {
       </div>
 
       {/* RIGHT FLOATING TOOLSTRIP */}
-      <div className="absolute right-3 sm:right-4 top-20 z-20 flex flex-col gap-1.5 pointer-events-auto select-none">
+      <div className="absolute right-3 sm:right-4 top-16 z-20 flex flex-col gap-1.5 pointer-events-auto select-none">
         
-        <div className="flex flex-col bg-white/90 backdrop-blur-xl rounded-2xl border border-stone-200/70 shadow-[0_6px_24px_rgba(0,0,0,0.08)] p-1 divide-y divide-stone-100 text-stone-700">
+        <div className="flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl border border-stone-200/80 shadow-[0_6px_20px_rgba(0,0,0,0.08)] p-1 divide-y divide-stone-100 text-stone-700">
           <button
             onClick={() => mapInstanceRef.current?.zoomIn()}
-            className="p-2.5 rounded-xl hover:bg-stone-100 transition"
+            className="p-2 rounded-xl hover:bg-stone-100 transition"
             title="Zoom In"
           >
             <ZoomIn className="w-4 h-4 text-stone-700" />
           </button>
           <button
             onClick={() => mapInstanceRef.current?.zoomOut()}
-            className="p-2.5 rounded-xl hover:bg-stone-100 transition"
+            className="p-2 rounded-xl hover:bg-stone-100 transition"
             title="Zoom Out"
           >
             <ZoomOut className="w-4 h-4 text-stone-700" />
           </button>
         </div>
 
-        <div className="flex flex-col bg-white/90 backdrop-blur-xl rounded-2xl border border-stone-200/70 shadow-[0_6px_24px_rgba(0,0,0,0.08)] p-1 gap-1 text-stone-700">
+        <div className="flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl border border-stone-200/80 shadow-[0_6px_20px_rgba(0,0,0,0.08)] p-1 gap-1 text-stone-700">
           <button
             onClick={handleLocateMe}
-            className="p-2.5 rounded-xl hover:bg-stone-100 text-stone-700 transition"
+            className="p-2 rounded-xl hover:bg-stone-100 text-stone-700 transition"
             title="My Location"
           >
             <Navigation className="w-4 h-4" />
@@ -527,7 +580,7 @@ export default function GoogleMapGIS() {
               setIsDrawingMode(!isDrawingMode);
               if (isDrawingMode) setDrawnPoints([]);
             }}
-            className={`p-2.5 rounded-xl transition ${
+            className={`p-2 rounded-xl transition ${
               isDrawingMode
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'hover:bg-stone-100 text-stone-700'
@@ -539,7 +592,7 @@ export default function GoogleMapGIS() {
 
           <button
             onClick={toggleFullscreen}
-            className="p-2.5 rounded-xl hover:bg-stone-100 text-stone-700 transition"
+            className="p-2 rounded-xl hover:bg-stone-100 text-stone-700 transition"
             title="Fullscreen"
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -584,56 +637,45 @@ export default function GoogleMapGIS() {
         </div>
       )}
 
-      {/* BOTTOM PROPERTY DETAILS DRAWER */}
-      {selectedProperty && (
-        <div className="relative z-10 m-3 sm:m-4 bg-white/95 backdrop-blur-xl p-4 sm:p-5 rounded-[24px] border border-stone-200/80 shadow-[0_12px_40px_rgba(0,0,0,0.12)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs pointer-events-auto animate-in slide-in-from-bottom duration-300">
-          
-          <div className="flex items-center gap-3.5 min-w-0 flex-1">
-            <img
-              src={selectedProperty.images[0]}
-              alt={selectedProperty.title}
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover shrink-0 border border-stone-200 shadow-xs"
-            />
-            
-            <div className="space-y-1 min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-extrabold text-sm sm:text-base text-stone-900 truncate">
-                  {selectedProperty.title}
-                </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 flex items-center gap-1 shrink-0">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                  <span>{selectedProperty.verification.approvalType} Approved</span>
-                </span>
-              </div>
-              
-              <p className="text-[11px] text-stone-500 font-medium flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                <span>Survey #{selectedProperty.verification.surveyNumber}</span>
-                <span>·</span>
-                <span>{selectedProperty.location.city}</span>
-                <span>·</span>
-                <span>{formatNumber(selectedProperty.totalSqft)} sq ft</span>
-                <span>·</span>
-                <span className="font-black text-stone-900">{formatCurrency(selectedProperty.price)}</span>
-              </p>
+      {/* 
+        BOTTOM PROPERTY PEEK CARD (Only shown in Full Map Hero Mode or Mobile to avoid double-card clutter in Split View) 
+      */}
+      {showBottomDrawer && selectedProperty && (
+        <div className="relative z-10 m-3 sm:m-4 max-w-md bg-white/95 backdrop-blur-xl p-3 sm:p-3.5 rounded-2xl border border-stone-200/90 shadow-[0_12px_36px_rgba(0,0,0,0.16)] flex items-center justify-between gap-3 text-xs pointer-events-auto animate-in slide-in-from-bottom duration-300">
+          <img
+            src={selectedProperty.images[0]}
+            alt={selectedProperty.title}
+            className="w-13 h-13 sm:w-14 sm:h-14 rounded-xl object-cover shrink-0 border border-stone-200 shadow-xs"
+          />
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
+                {selectedProperty.verification.approvalType}
+              </span>
+              <span className="text-[10px] text-stone-500 font-mono">#{selectedProperty.verification.surveyNumber}</span>
+            </div>
+            <h4 className="text-xs font-extrabold text-stone-900 truncate">{selectedProperty.title}</h4>
+            <div className="flex items-center gap-2 text-stone-600 font-medium text-[11px]">
+              <span className="font-black text-stone-900" suppressHydrationWarning>{formatCurrency(selectedProperty.price)}</span>
+              <span>·</span>
+              <span suppressHydrationWarning>{formatNumber(selectedProperty.totalSqft)} sq ft</span>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => setIsDetailModalOpen(true)}
-              className="flex-1 sm:flex-none px-4 py-2 rounded-full border border-stone-200 hover:bg-stone-50 text-stone-800 font-semibold transition"
+              className="px-3 py-1.5 rounded-full border border-stone-200 hover:bg-stone-50 text-stone-800 font-semibold transition text-xs"
             >
-              Full Details
+              Specs
             </button>
             <button
               onClick={() => setIsDealModalOpen(true)}
-              className="flex-1 sm:flex-none px-5 py-2 rounded-full bg-stone-900 hover:bg-stone-800 text-white font-semibold shadow-xs transition flex items-center justify-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-full bg-stone-900 hover:bg-stone-800 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1"
             >
-              <span>Book Visit</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Visit</span>
+              <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-
         </div>
       )}
 
