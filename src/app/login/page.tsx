@@ -24,7 +24,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
-import DigitalTwin3DVisualizer from '@/components/auth/DigitalTwin3DVisualizer';
+import ArchitecturalLandShowcase from '@/components/auth/ArchitecturalLandShowcase';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<UserRole>('buyer');
   const [sellerEntityType, setSellerEntityType] = useState<EntityType>('individual');
   const [email, setEmail] = useState('alex.wright@investor.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const [password, setPassword] = useState('buyer@pass123');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -61,7 +61,7 @@ export default function LoginPage() {
       if (activeTab === 'admin') router.push('/admin');
       else if (activeTab === 'seller') router.push('/seller');
       else router.push('/buyer');
-    }, 400);
+    }, 350);
   };
 
   const handleQuickDemoLogin = (role: UserRole, entityType: EntityType, redirectPath: string) => {
@@ -73,7 +73,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white relative overflow-x-hidden">
       
-      {/* Background Ambient Glows */}
+      {/* Background Subtle Ambient Glow */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -87,11 +87,11 @@ export default function LoginPage() {
             <div className="flex items-center gap-1.5">
               <span className="font-black text-base text-white tracking-tight">PlotTerra</span>
               <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">
-                3D GIS
+                GIS 3D
               </span>
             </div>
             <p className="text-[10px] text-stone-400 hidden sm:block font-medium">
-              Land & Real Estate Acquisition Digital Twin
+              Land & Real Estate Acquisition Platform
             </p>
           </div>
         </Link>
@@ -108,68 +108,35 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* Main Grid: 3D Visualization + Login Form */}
+      {/* Main Grid: Architectural Showcase + Clean Login Form */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex items-center my-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full items-center">
           
-          {/* LEFT COLUMN (7 COLS): 3D Video & LiDAR Topography Digital Twin */}
+          {/* LEFT COLUMN (7 COLS): Architectural Cadastral Showcase (Zero Video) */}
           <div className="lg:col-span-7 flex flex-col space-y-4">
             <div className="flex items-center justify-between px-1">
               <div>
-                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                  <Globe2 className="w-3.5 h-3.5" />
-                  Photogrammetry & Drone Feed
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5" />
+                  Cadastral Survey & Title Verification
                 </span>
                 <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
-                  Interactive 3D Digital Twin Viewer
+                  Real Estate Acquisition Platform
                 </h2>
               </div>
               <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-stone-900 border border-stone-800 text-stone-300">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Live 60 FPS
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                Live Cadastral Data
               </span>
             </div>
 
-            {/* Embedded 3D Component */}
-            <div className="h-[460px] sm:h-[540px] lg:h-[620px] w-full">
-              <DigitalTwin3DVisualizer activeRole={activeTab} />
-            </div>
-
-            {/* Platform Feature Trust Strip */}
-            <div className="grid grid-cols-3 gap-3 pt-2">
-              <div className="p-3 rounded-2xl bg-stone-900/60 border border-stone-800/80 backdrop-blur-md">
-                <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold">
-                  <ShieldCheck className="w-4 h-4 shrink-0" />
-                  <span>DTCP Verified</span>
-                </div>
-                <p className="text-[11px] text-stone-400 mt-1 font-medium leading-tight">
-                  Perimeter survey coordinates pegged on satellite.
-                </p>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-stone-900/60 border border-stone-800/80 backdrop-blur-md">
-                <div className="flex items-center gap-1.5 text-blue-400 text-xs font-bold">
-                  <Lock className="w-4 h-4 shrink-0" />
-                  <span>Protected Escrow</span>
-                </div>
-                <p className="text-[11px] text-stone-400 mt-1 font-medium leading-tight">
-                  Zero spam. Direct seller privacy held in vault.
-                </p>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-stone-900/60 border border-stone-800/80 backdrop-blur-md">
-                <div className="flex items-center gap-1.5 text-purple-400 text-xs font-bold">
-                  <Layers className="w-4 h-4 shrink-0" />
-                  <span>Interactive 3D</span>
-                </div>
-                <p className="text-[11px] text-stone-400 mt-1 font-medium leading-tight">
-                  Topographical contours & sub-division layouts.
-                </p>
-              </div>
+            {/* Embedded Clean Architectural Showcase (Zero Video) */}
+            <div className="w-full">
+              <ArchitecturalLandShowcase activeRole={activeTab} />
             </div>
           </div>
 
-          {/* RIGHT COLUMN (5 COLS): Premium Login Card */}
+          {/* RIGHT COLUMN (5 COLS): Premium Auth Gateway */}
           <div className="lg:col-span-5 w-full">
             <div className="bg-stone-900/90 backdrop-blur-2xl border border-stone-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
               
@@ -391,7 +358,7 @@ export default function LoginPage() {
             <span>•</span>
             <span>Anti-Circumvention Escrow</span>
             <span>•</span>
-            <span>LiDAR 3D Digital Twin</span>
+            <span>Zero Spam Vault</span>
           </div>
         </div>
       </footer>
