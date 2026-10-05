@@ -102,14 +102,21 @@ export default function Home() {
     }
   }, [selectedProperty?.id, selectedProperty?.isVentureLayout, activeCanvasTab]);
 
-  // Smoothly scroll active card into view in the bottom carousel
+  // Smoothly scroll active card into center in the bottom carousel without affecting window scroll
   useEffect(() => {
-    if (selectedProperty && cardRefs.current[selectedProperty.id]) {
-      cardRefs.current[selectedProperty.id]?.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest'
-      });
+    if (selectedProperty && cardRefs.current[selectedProperty.id] && bottomCarouselRef.current) {
+      const card = cardRefs.current[selectedProperty.id];
+      const container = bottomCarouselRef.current;
+      if (card) {
+        const cardLeft = card.offsetLeft;
+        const cardWidth = card.offsetWidth;
+        const containerWidth = container.offsetWidth;
+        const targetScrollLeft = cardLeft - (containerWidth / 2) + (cardWidth / 2);
+        container.scrollTo({
+          left: Math.max(0, targetScrollLeft),
+          behavior: 'smooth'
+        });
+      }
     }
   }, [selectedProperty?.id]);
 
@@ -126,23 +133,24 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-[#FAFAF9] text-stone-900 font-sans">
       <Navbar />
 
-      <main className="flex-1 max-w-[1520px] w-full mx-auto p-2 sm:p-4 lg:p-6 space-y-3.5">
+      <main className="flex-1 max-w-[1520px] w-full mx-auto p-2 sm:p-4 lg:p-6 space-y-3.5 overflow-hidden">
         
         {/* Top Control Bar: Channel, SubType Filters & View Modes */}
-        <div className="bg-white p-3 sm:p-3.5 rounded-[24px] border border-stone-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="bg-white p-3 sm:p-3.5 rounded-[24px] border border-stone-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-3 overflow-hidden">
           
           {/* Channel Label & Count */}
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center justify-between gap-2 min-w-0 w-full md:w-auto">
             <span className="text-xs font-black text-stone-900 uppercase tracking-wider truncate">
-              {activeChannel === 'land_plot' ? '🌱 Tamil Nadu Lands, Plots & Farmhouses' : '🏢 Tamil Nadu Luxury Villas & Assets'}
+              {activeChannel === 'land_plot' ? '🌱 Tamil Nadu Lands & Plots' : '🏢 Tamil Nadu Luxury Villas'}
             </span>
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 shrink-0">
-              {filteredProperties.length} Properties in TN
+            <span className="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 sm:px-2.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 shrink-0">
+              <span className="sm:hidden">{filteredProperties.length} in TN</span>
+              <span className="hidden sm:inline">{filteredProperties.length} Properties in TN</span>
             </span>
           </div>
 
           {/* Subtype Filter Pills + View Switcher */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 shrink-0">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 w-full min-w-0 md:w-auto scrollbar-none pr-2">
             
             {/* Filter Pills */}
             <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-full border border-stone-200/70 text-xs">
@@ -274,7 +282,7 @@ export default function Home() {
           The map is the dominant full canvas with floating compact property cards at bottom or side.
         */}
         {viewMode === 'full_map' && (
-          <div className="relative w-full h-[620px] sm:h-[700px] lg:h-[760px] rounded-[28px] overflow-hidden border border-stone-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-stone-100 flex flex-col justify-between">
+          <div className="relative w-full h-[620px] sm:h-[700px] lg:h-[760px] rounded-[28px] overflow-hidden border border-stone-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-stone-900">
             
             {/* The GoogleMapGIS / Masterplan Canvas fills 100% */}
             <div className="absolute inset-0 z-0">
@@ -322,19 +330,19 @@ export default function Home() {
                       property={prop}
                       isSelected={selectedProperty?.id === prop.id}
                       onSelect={() => {
-                        setSelectedProperty(prop);
+                        setSelectedProperty({ ...prop });
                         setActiveCanvasTab('satellite');
                       }}
                       onOpenMasterplan={() => {
-                        setSelectedProperty(prop);
+                        setSelectedProperty({ ...prop });
                         setActiveCanvasTab('masterplan');
                       }}
                       onOpenDetails={() => {
-                        setSelectedProperty(prop);
+                        setSelectedProperty({ ...prop });
                         setIsDetailModalOpen(true);
                       }}
                       onOpenVisit={() => {
-                        setSelectedProperty(prop);
+                        setSelectedProperty({ ...prop });
                         setIsDealModalOpen(true);
                       }}
                       isSideView={true}
@@ -350,7 +358,7 @@ export default function Home() {
               Touching any card immediately updates selectedProperty and flies the map to its surveyed boundary!
             */}
             {cardsPlacement === 'bottom' && (
-              <div className="relative z-20 p-1.5 sm:p-3 pointer-events-none">
+              <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-4 right-2 sm:right-4 z-20 pointer-events-none">
                 
                 {/* Carousel Top Hint & Controls */}
                 <div className="flex items-center justify-between mb-1 px-1 sm:px-2 pointer-events-auto">
@@ -387,7 +395,7 @@ export default function Home() {
                 {/* Horizontal Scrollable Compact Cards Dock */}
                 <div
                   ref={bottomCarouselRef}
-                  className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1.5 pt-0.5 px-0.5 pointer-events-auto scrollbar-none snap-x snap-mandatory"
+                  className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1.5 pt-0.5 px-0.5 pr-6 pointer-events-auto scrollbar-none snap-x snap-mandatory"
                   style={{ scrollBehavior: 'smooth' }}
                 >
                   {filteredProperties.map(prop => (

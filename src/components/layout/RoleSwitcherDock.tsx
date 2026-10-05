@@ -29,7 +29,7 @@ export default function RoleSwitcherDock() {
   };
 
   return (
-    <aside aria-label="Role Switcher Dock" className="fixed bottom-4 left-4 z-50 select-none">
+    <aside aria-label="Role Switcher Dock" className="hidden md:block fixed bottom-4 left-4 z-50 select-none">
       <div className="bg-white/95 backdrop-blur-md border border-slate-300 shadow-2xl rounded-2xl p-2.5 max-w-sm transition-all text-xs">
         
         {/* Header with Collapse Toggle */}

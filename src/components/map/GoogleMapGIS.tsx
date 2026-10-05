@@ -65,18 +65,19 @@ export default function GoogleMapGIS({
   const [isMapReady, setIsMapReady] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const centerLat = selectedProperty?.location.lat || 12.8420;
-  const centerLng = selectedProperty?.location.lng || 80.0650;
+  const initialCenterRef = useRef<[number, number]>([
+    selectedProperty?.location.lat || 12.8420,
+    selectedProperty?.location.lng || 80.0650
+  ]);
 
-  const getGoogleTileUrl = (type: MapLayerType) => {
+  const getMapTileUrl = (type: MapLayerType) => {
     switch (type) {
       case 'satellite':
-        return 'https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}';
-      case 'roadmap':
-        return 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
       case 'hybrid':
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      case 'roadmap':
       default:
-        return 'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
+        return 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
     }
   };
 
@@ -98,7 +99,7 @@ export default function GoogleMapGIS({
     }
   }, []);
 
-  // 1. Initialize Leaflet Map safely
+  // 1. Initialize Leaflet Map safely (created once on mount)
   useEffect(() => {
     let isMounted = true;
 
@@ -121,7 +122,7 @@ export default function GoogleMapGIS({
         }
 
         const map = L.map(mapContainerRef.current, {
-          center: [centerLat, centerLng],
+          center: initialCenterRef.current,
           zoom: zoomLevel,
           zoomControl: false,
           attributionControl: false,
@@ -133,11 +134,13 @@ export default function GoogleMapGIS({
 
         mapInstanceRef.current = map;
 
-        const tileUrl = getGoogleTileUrl(mapType);
+        const tileUrl = getMapTileUrl(mapType);
+        const isSatellite = mapType === 'satellite' || mapType === 'hybrid';
         const tileLayer = L.tileLayer(tileUrl, {
-          subdomains: ['0', '1', '2', '3'],
-          maxZoom: 21,
-          maxNativeZoom: 20
+          subdomains: isSatellite ? [] : ['a', 'b', 'c', 'd'],
+          maxZoom: 19,
+          maxNativeZoom: 18,
+          attribution: isSatellite ? '© Esri Satellite' : '© CARTO'
         }).addTo(map);
 
         activeTileLayerRef.current = tileLayer;
@@ -197,7 +200,7 @@ export default function GoogleMapGIS({
         } catch {}
       }
     };
-  }, [centerLat, centerLng, safeInvalidateSize]);
+  }, [safeInvalidateSize]);
 
   // 2. Change Tile Layer
   const changeMapType = async (newType: MapLayerType) => {
@@ -208,11 +211,13 @@ export default function GoogleMapGIS({
       if (activeTileLayerRef.current && mapInstanceRef.current) {
         mapInstanceRef.current.removeLayer(activeTileLayerRef.current);
       }
-      const tileUrl = getGoogleTileUrl(newType);
+      const tileUrl = getMapTileUrl(newType);
+      const isSatellite = newType === 'satellite' || newType === 'hybrid';
       const newTileLayer = L.tileLayer(tileUrl, {
-        subdomains: ['0', '1', '2', '3'],
-        maxZoom: 21,
-        maxNativeZoom: 20
+        subdomains: isSatellite ? [] : ['a', 'b', 'c', 'd'],
+        maxZoom: 19,
+        maxNativeZoom: 18,
+        attribution: isSatellite ? '© Esri Satellite' : '© CARTO'
       }).addTo(mapInstanceRef.current);
       activeTileLayerRef.current = newTileLayer;
     } catch (err) {
@@ -233,18 +238,18 @@ export default function GoogleMapGIS({
           const bounds = L.latLngBounds(latLngs);
           const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
           mapInstanceRef.current.fitBounds(bounds, {
-            paddingTopLeft: [isMobile ? 15 : 35, isMobile ? 60 : 55],
-            paddingBottomRight: [isMobile ? 15 : 35, isMobile ? 115 : 95],
+            paddingTopLeft: [isMobile ? 12 : 35, isMobile ? 50 : 55],
+            paddingBottomRight: [isMobile ? 12 : 35, isMobile ? 105 : 95],
             maxZoom: 18,
             animate: true,
-            duration: 0.9
+            duration: 0.8
           });
         });
       } else {
         mapInstanceRef.current.flyTo(
           [selectedProperty.location.lat, selectedProperty.location.lng],
           17,
-          { duration: 0.9 }
+          { duration: 0.8 }
         );
       }
     } catch (err) {
@@ -570,7 +575,7 @@ export default function GoogleMapGIS({
   return (
     <div
       ref={mapWrapperRef}
-      className={`relative w-full h-full rounded-[28px] overflow-hidden bg-stone-100 border border-stone-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col justify-between select-none transition-all ${
+      className={`relative w-full h-full rounded-[28px] overflow-hidden bg-stone-900 border border-stone-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] select-none transition-all ${
         isFullscreen ? 'h-screen w-screen rounded-none border-0' : ''
       }`}
     >
@@ -581,7 +586,7 @@ export default function GoogleMapGIS({
       />
 
       {/* TOP FLOATING ISLAND BAR */}
-      <div className="relative z-10 p-2 sm:p-4 flex items-center justify-between gap-1.5 sm:gap-2.5 pointer-events-none">
+      <div className="absolute top-2 sm:top-3 left-2 sm:left-4 right-2 sm:right-4 z-20 flex items-center justify-between gap-1.5 sm:gap-2.5 pointer-events-none">
         
         {/* Left Side: Sidebar Toggle (if available) + Compact Search Pill */}
         <div className="flex items-center gap-1.5 pointer-events-auto min-w-0">
@@ -608,15 +613,15 @@ export default function GoogleMapGIS({
           {/* Search Input Floating Pill (Mobile-safe width) */}
           <form
             onSubmit={handleLocationSearch}
-            className="flex items-center bg-white/95 backdrop-blur-xl rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] px-2.5 py-1 w-32 xs:w-40 sm:w-56 transition-all focus-within:w-44 sm:focus-within:w-68 shrink-0"
+            className="flex items-center bg-white/95 backdrop-blur-xl rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] px-2 py-0.5 sm:px-2.5 sm:py-1 w-24 xs:w-32 sm:w-56 transition-all focus-within:w-36 sm:focus-within:w-68 shrink-0"
           >
-            <Search className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+            <Search className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-stone-400 shrink-0" />
             <input
               type="text"
               value={searchLocation}
               onChange={e => setSearchLocation(e.target.value)}
               placeholder="Search TN..."
-              className="w-full bg-transparent px-1.5 text-[11px] text-stone-900 placeholder-stone-400 focus:outline-none font-medium"
+              className="w-full bg-transparent px-1 sm:px-1.5 text-[10px] sm:text-[11px] text-stone-900 placeholder-stone-400 focus:outline-none font-medium"
             />
             {searchLocation && (
               <button
@@ -630,7 +635,7 @@ export default function GoogleMapGIS({
             <button
               type="submit"
               disabled={isSearching}
-              className="px-2 py-0.5 rounded-full bg-stone-900 text-white font-semibold text-[10px] sm:text-[11px] transition hover:bg-stone-800 shrink-0"
+              className="px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-full bg-stone-900 text-white font-semibold text-[9px] sm:text-[11px] transition hover:bg-stone-800 shrink-0"
             >
               {isSearching ? '...' : 'Go'}
             </button>
@@ -638,22 +643,32 @@ export default function GoogleMapGIS({
         </div>
 
         {/* Right Side: 16 Plots button (if layout) + Satellite / Streets Pill */}
-        <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 shrink-0">
+        <div className="pointer-events-auto flex items-center gap-1 shrink-0">
           {selectedProperty?.isVentureLayout && onOpenMasterplan && (
             <button
               onClick={onOpenMasterplan}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] sm:text-[11px] font-bold shadow-xs transition"
+              className="flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[9.5px] sm:text-[11px] font-bold shadow-xs transition"
               title="Inspect 16 Layout Plots"
             >
-              <Layers className="w-3 h-3 text-emerald-200" />
+              <Layers className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-200" />
               <span>16 Plots</span>
             </button>
           )}
 
-          <div className="flex items-center gap-0.5 bg-white/95 backdrop-blur-xl p-0.5 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-[10px] sm:text-xs font-semibold text-stone-700">
+          {/* Mobile Single Layer Toggle Button */}
+          <button
+            onClick={() => changeMapType(mapType === 'roadmap' ? 'hybrid' : 'roadmap')}
+            className="flex sm:hidden items-center gap-1 bg-white/95 backdrop-blur-xl px-2 py-0.5 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-[9.5px] font-bold text-stone-800"
+            title="Toggle Satellite / Streets"
+          >
+            <span>{mapType === 'roadmap' ? '🗺️ Map' : '🛰️ Sat'}</span>
+          </button>
+
+          {/* Desktop Dual Switcher Pill */}
+          <div className="hidden sm:flex items-center gap-0.5 bg-white/95 backdrop-blur-xl p-0.5 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-xs font-semibold text-stone-700">
             <button
               onClick={() => changeMapType('hybrid')}
-              className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] transition ${
+              className={`px-2.5 py-1 rounded-full text-[11px] transition ${
                 mapType === 'hybrid' ? 'bg-stone-900 text-white shadow-xs' : 'hover:bg-stone-100 text-stone-600'
               }`}
             >
@@ -661,7 +676,7 @@ export default function GoogleMapGIS({
             </button>
             <button
               onClick={() => changeMapType('roadmap')}
-              className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] transition ${
+              className={`px-2.5 py-1 rounded-full text-[11px] transition ${
                 mapType === 'roadmap' ? 'bg-stone-900 text-white shadow-xs' : 'hover:bg-stone-100 text-stone-600'
               }`}
             >
@@ -673,7 +688,7 @@ export default function GoogleMapGIS({
       </div>
 
       {/* RIGHT FLOATING TOOLSTRIP */}
-      <div className="absolute right-2 sm:right-4 top-13 sm:top-16 z-20 flex flex-col gap-1 pointer-events-auto select-none">
+      <div className="absolute right-2 sm:right-4 top-13 sm:top-15 z-20 flex flex-col gap-1 pointer-events-auto select-none">
         
         <div className="flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] p-0.5 sm:p-1 divide-y divide-stone-100 text-stone-700">
           <button
@@ -729,7 +744,7 @@ export default function GoogleMapGIS({
 
       {/* DRAWING / MEASURING HUD OVERLAY */}
       {isDrawingMode && (
-        <div className="relative z-10 mx-3 sm:mx-4 bg-white/95 backdrop-blur-xl border border-amber-300 rounded-2xl p-3 text-stone-900 text-xs flex flex-wrap items-center justify-between gap-3 shadow-lg">
+        <div className="absolute top-14 sm:top-16 left-2 sm:left-4 right-2 sm:right-4 z-30 bg-white/95 backdrop-blur-xl border border-amber-300 rounded-2xl p-2.5 sm:p-3 text-stone-900 text-xs flex flex-wrap items-center justify-between gap-3 shadow-lg">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
             <span className="font-semibold text-stone-800">Click map points to outline boundary</span>
@@ -767,7 +782,7 @@ export default function GoogleMapGIS({
         BOTTOM PROPERTY PEEK CARD (Only shown in Full Map Hero Mode or Mobile to avoid double-card clutter in Split View) 
       */}
       {showBottomDrawer && selectedProperty && (
-        <div className="relative z-10 m-3 sm:m-4 max-w-md bg-white/95 backdrop-blur-xl p-3 sm:p-3.5 rounded-2xl border border-stone-200/90 shadow-[0_12px_36px_rgba(0,0,0,0.16)] flex items-center justify-between gap-3 text-xs pointer-events-auto animate-in slide-in-from-bottom duration-300">
+        <div className="absolute bottom-3 left-3 right-3 sm:left-4 sm:right-auto z-20 max-w-md bg-white/95 backdrop-blur-xl p-3 sm:p-3.5 rounded-2xl border border-stone-200/90 shadow-[0_12px_36px_rgba(0,0,0,0.16)] flex items-center justify-between gap-3 text-xs pointer-events-auto animate-in slide-in-from-bottom duration-300">
           <img
             src={selectedProperty.images[0]}
             alt={selectedProperty.title}
