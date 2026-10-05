@@ -154,6 +154,12 @@ export const INITIAL_PROPERTIES: Property[] = [
       { lat: 12.9044, lng: 80.2526 },
       { lat: 12.9042, lng: 80.2512 }
     ],
+    edgeMeasurements: [
+      { from: 'V1', to: 'V2', sideName: 'North Boundary', lengthFt: 140 },
+      { from: 'V2', to: 'V3', sideName: 'Beachfront Facing', lengthFt: 160 },
+      { from: 'V3', to: 'V4', sideName: 'South Boundary', lengthFt: 140 },
+      { from: 'V4', to: 'V1', sideName: '50ft Access Road', lengthFt: 155, isRoadFacing: true }
+    ],
     images: [
       'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200&auto=format&fit=crop',

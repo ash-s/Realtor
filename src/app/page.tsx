@@ -280,71 +280,18 @@ export default function Home() {
             <div className="absolute inset-0 z-0">
               {activeCanvasTab === 'satellite' ? (
                 <ErrorBoundary fallbackTitle="Satellite GIS Map">
-                  <GoogleMapGIS showBottomDrawer={false} />
+                  <GoogleMapGIS
+                    showBottomDrawer={false}
+                    onOpenMasterplan={() => setActiveCanvasTab('masterplan')}
+                    onToggleSidebar={cardsPlacement === 'side' ? () => setIsSideDrawerOpen(!isSideDrawerOpen) : undefined}
+                    isSidebarOpen={isSideDrawerOpen}
+                  />
                 </ErrorBoundary>
               ) : (
                 <ErrorBoundary fallbackTitle="Plotted Venture Masterplan">
                   <VentureLayoutExplorer onBackToMap={() => setActiveCanvasTab('satellite')} />
                 </ErrorBoundary>
               )}
-            </div>
-
-            {/* Floating Top Controls: Masterplan switch + Active Location Pill */}
-            <div className="relative z-20 p-3 sm:p-4 flex items-center justify-between pointer-events-none">
-              
-              {/* Left: Active Property Indicator & Tamil Nadu Locator */}
-              <div className="flex items-center gap-2 pointer-events-auto">
-                {selectedProperty && (
-                  <div className="bg-white/95 backdrop-blur-xl px-3.5 py-1.5 rounded-full border border-stone-200/90 shadow-[0_6px_20px_rgba(0,0,0,0.1)] flex items-center gap-2 text-xs font-bold text-stone-900">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                    <span className="truncate max-w-[140px] sm:max-w-[220px]">{selectedProperty.location.city}</span>
-                    <span className="text-[10px] text-stone-400 font-mono">#{selectedProperty.verification.surveyNumber.split(' ')[0]}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Center: Masterplan Tab Switcher (if plotted layout) */}
-              {selectedProperty?.isVentureLayout && (
-                <div className="pointer-events-auto bg-white/95 backdrop-blur-xl p-1 rounded-full border border-stone-200/90 shadow-[0_6px_24px_rgba(0,0,0,0.12)] flex items-center gap-1 text-xs font-bold">
-                  <button
-                    onClick={() => setActiveCanvasTab('satellite')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition ${
-                      activeCanvasTab === 'satellite'
-                        ? 'bg-stone-900 text-white shadow-xs'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
-                  >
-                    <Compass className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Satellite</span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveCanvasTab('masterplan')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition ${
-                      activeCanvasTab === 'masterplan'
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
-                  >
-                    <Layers className="w-3.5 h-3.5 text-emerald-200" />
-                    <span>16 Plots</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Right: Side Drawer Toggle (When cardsPlacement === 'side') */}
-              {cardsPlacement === 'side' && (
-                <div className="pointer-events-auto">
-                  <button
-                    onClick={() => setIsSideDrawerOpen(!isSideDrawerOpen)}
-                    className="p-2 rounded-full bg-white/95 backdrop-blur-xl border border-stone-200/90 shadow-md text-stone-800 hover:bg-stone-50 transition"
-                    title={isSideDrawerOpen ? 'Collapse Side Cards' : 'Open Side Cards'}
-                  >
-                    {isSideDrawerOpen ? <PanelLeftClose className="w-4 h-4 text-stone-600" /> : <PanelLeftOpen className="w-4 h-4 text-stone-600" />}
-                  </button>
-                </div>
-              )}
-
             </div>
 
             {/* 
@@ -400,16 +347,22 @@ export default function Home() {
             {/* 
               OPTION B: FLOATING BOTTOM SMALL CARDS TRAY / CAROUSEL (DEFAULT)
               Positioned along the bottom with horizontal scrolling and touch swiping.
-              Touching any card immediately updates selectedProperty and flies the map!
+              Touching any card immediately updates selectedProperty and flies the map to its surveyed boundary!
             */}
             {cardsPlacement === 'bottom' && (
-              <div className="relative z-20 p-2 sm:p-4 pointer-events-none">
+              <div className="relative z-20 p-1.5 sm:p-3 pointer-events-none">
                 
                 {/* Carousel Top Hint & Controls */}
-                <div className="flex items-center justify-between mb-1.5 px-2 pointer-events-auto">
-                  <div className="bg-stone-900/80 backdrop-blur-md px-3 py-1 rounded-full text-white text-[11px] font-bold shadow-md flex items-center gap-1.5">
-                    <Compass className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Touch any card to fly on map ({filteredProperties.length} in TN)</span>
+                <div className="flex items-center justify-between mb-1 px-1 sm:px-2 pointer-events-auto">
+                  <div className="bg-stone-900/85 backdrop-blur-md px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-white text-[10px] sm:text-[11px] font-bold shadow-md flex items-center gap-1.5">
+                    <Compass className="w-3 h-3 text-blue-400 shrink-0" />
+                    <span className="truncate max-w-[210px] xs:max-w-[270px] sm:max-w-none">
+                      {selectedProperty ? (
+                        <>Active: <b className="text-emerald-400">{selectedProperty.location.city.split('(')[0].trim()}</b> · <span className="font-mono text-stone-300">#{selectedProperty.verification.surveyNumber.split(' ')[0]}</span> ({formatCompactINR(selectedProperty.price)})</>
+                      ) : (
+                        <>Touch any card to frame surveyed boundary ({filteredProperties.length} in TN)</>
+                      )}
+                    </span>
                   </div>
 
                   {/* Left / Right Carousel Scroll Buttons */}
@@ -419,14 +372,14 @@ export default function Home() {
                       className="p-1 rounded-full hover:bg-stone-100 text-stone-600 transition"
                       title="Scroll Left"
                     >
-                      <ChevronLeft className="w-4 h-4" />
+                      <ChevronLeft className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => scrollCarousel('right')}
                       className="p-1 rounded-full hover:bg-stone-100 text-stone-600 transition"
                       title="Scroll Right"
                     >
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -434,7 +387,7 @@ export default function Home() {
                 {/* Horizontal Scrollable Compact Cards Dock */}
                 <div
                   ref={bottomCarouselRef}
-                  className="flex items-center gap-3 overflow-x-auto pb-2 pt-1 px-1 pointer-events-auto scrollbar-none snap-x snap-mandatory"
+                  className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1.5 pt-0.5 px-0.5 pointer-events-auto scrollbar-none snap-x snap-mandatory"
                   style={{ scrollBehavior: 'smooth' }}
                 >
                   {filteredProperties.map(prop => (
@@ -449,19 +402,19 @@ export default function Home() {
                         property={prop}
                         isSelected={selectedProperty?.id === prop.id}
                         onSelect={() => {
-                          setSelectedProperty(prop);
+                          setSelectedProperty({ ...prop });
                           setActiveCanvasTab('satellite');
                         }}
                         onOpenMasterplan={() => {
-                          setSelectedProperty(prop);
+                          setSelectedProperty({ ...prop });
                           setActiveCanvasTab('masterplan');
                         }}
                         onOpenDetails={() => {
-                          setSelectedProperty(prop);
+                          setSelectedProperty({ ...prop });
                           setIsDetailModalOpen(true);
                         }}
                         onOpenVisit={() => {
-                          setSelectedProperty(prop);
+                          setSelectedProperty({ ...prop });
                           setIsDealModalOpen(true);
                         }}
                         isSideView={false}
@@ -542,7 +495,10 @@ export default function Home() {
             >
               {activeCanvasTab === 'satellite' ? (
                 <ErrorBoundary fallbackTitle="Satellite GIS Map">
-                  <GoogleMapGIS showBottomDrawer={true} />
+                  <GoogleMapGIS
+                    showBottomDrawer={true}
+                    onOpenMasterplan={() => setActiveCanvasTab('masterplan')}
+                  />
                 </ErrorBoundary>
               ) : (
                 <ErrorBoundary fallbackTitle="Plotted Venture Masterplan">

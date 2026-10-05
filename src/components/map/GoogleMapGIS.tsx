@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   SlidersHorizontal,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Layers
 } from 'lucide-react';
 import { Property } from '@/types';
 import { formatCurrency, formatNumber, formatCompactINR } from '@/lib/formatters';
@@ -27,12 +28,14 @@ interface GoogleMapGISProps {
   showBottomDrawer?: boolean;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
+  onOpenMasterplan?: () => void;
 }
 
 export default function GoogleMapGIS({
   showBottomDrawer = false,
   onToggleSidebar,
-  isSidebarOpen = true
+  isSidebarOpen = true,
+  onOpenMasterplan
 }: GoogleMapGISProps) {
   const {
     properties,
@@ -217,22 +220,39 @@ export default function GoogleMapGIS({
     }
   };
 
-  // 3. Auto-Fly to Property whenever selectedProperty changes
+  // 3. Auto-Fly and Frame Property Boundary whenever selectedProperty changes
   useEffect(() => {
     if (!isMapReady || !mapInstanceRef.current || !selectedProperty) return;
     try {
       safeInvalidateSize();
-      mapInstanceRef.current.flyTo(
-        [selectedProperty.location.lat, selectedProperty.location.lng],
-        17,
-        { duration: 1.2 }
-      );
+      const boundary = selectedProperty.boundary;
+      if (boundary && boundary.length >= 3) {
+        import('leaflet').then(L => {
+          if (!mapInstanceRef.current) return;
+          const latLngs: [number, number][] = boundary.map(p => [p.lat, p.lng]);
+          const bounds = L.latLngBounds(latLngs);
+          const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+          mapInstanceRef.current.fitBounds(bounds, {
+            paddingTopLeft: [isMobile ? 15 : 35, isMobile ? 60 : 55],
+            paddingBottomRight: [isMobile ? 15 : 35, isMobile ? 115 : 95],
+            maxZoom: 18,
+            animate: true,
+            duration: 0.9
+          });
+        });
+      } else {
+        mapInstanceRef.current.flyTo(
+          [selectedProperty.location.lat, selectedProperty.location.lng],
+          17,
+          { duration: 0.9 }
+        );
+      }
     } catch (err) {
-      console.warn('flyTo error:', err);
+      console.warn('flyTo/fitBounds error:', err);
     }
-  }, [selectedProperty?.id, isMapReady, safeInvalidateSize]);
+  }, [selectedProperty, isMapReady, safeInvalidateSize]);
 
-  // 4. Render Clean Land Boundary Outline (Pure royal blue geometry, zero clutter)
+  // 4. Render High-Contrast Survey Cadastral Boundary with Corner Pegs & Distance Markers
   useEffect(() => {
     if (!isMapReady || !mapInstanceRef.current || !polygonLayerRef.current) return;
 
@@ -249,21 +269,109 @@ export default function GoogleMapGIS({
 
         const latLngs: [number, number][] = boundary.map(p => [p.lat, p.lng]);
 
+        // 1. Outer Neon Cyan Glow (High visibility against dark satellite imagery)
         L.polygon(latLngs, {
-          color: '#2563eb', // Royal Blue outline
-          weight: 3.5,
-          opacity: 0.95,
+          color: '#38bdf8',
+          weight: 6,
+          opacity: 0.55,
           fillColor: '#3b82f6',
-          fillOpacity: 0.2
+          fillOpacity: 0.22
         }).addTo(polygonLayerRef.current);
 
+        // 2. Core Solid Royal Blue Line
+        L.polygon(latLngs, {
+          color: '#1d4ed8',
+          weight: 3.5,
+          opacity: 1,
+          fillColor: 'transparent'
+        }).addTo(polygonLayerRef.current);
+
+        // 3. Inner White Survey Dashed Line
         L.polygon(latLngs, {
           color: '#ffffff',
           weight: 1.5,
-          opacity: 0.8,
+          opacity: 0.9,
           fillColor: 'transparent',
-          dashArray: '6, 6'
+          dashArray: '5, 5'
         }).addTo(polygonLayerRef.current);
+
+        // 4. Corner Vertex Pegs (Points A, B, C, D...)
+        boundary.forEach((pt, idx) => {
+          const pegLetter = String.fromCharCode(65 + idx);
+          const pegIcon = L.divIcon({
+            className: 'survey-peg',
+            html: `
+              <div style="
+                transform:translate(-50%, -50%);
+                width:20px;
+                height:20px;
+                border-radius:50%;
+                background:#1d4ed8;
+                color:#ffffff;
+                font-size:10px;
+                font-weight:900;
+                font-family:ui-sans-serif, system-ui, sans-serif;
+                border:2px solid #ffffff;
+                box-shadow:0 3px 8px rgba(0,0,0,0.45);
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                cursor:default;
+              ">
+                ${pegLetter}
+              </div>
+            `,
+            iconSize: [0, 0],
+            iconAnchor: [0, 0]
+          });
+          const pegMarker = L.marker([pt.lat, pt.lng], { icon: pegIcon });
+          pegMarker.bindTooltip(`<b>Cadastral Peg ${pegLetter}</b><br/><span style="font-family:monospace;font-size:10px;">${pt.lat.toFixed(5)}, ${pt.lng.toFixed(5)}</span>`, {
+            direction: 'top',
+            offset: [0, -12],
+            className: 'survey-peg-tooltip'
+          });
+          pegMarker.addTo(polygonLayerRef.current);
+        });
+
+        // 5. Edge Measurement Badges (Surveyed Feet & Road Indicators)
+        if (selectedProperty.edgeMeasurements && selectedProperty.edgeMeasurements.length > 0) {
+          selectedProperty.edgeMeasurements.forEach((edge, idx) => {
+            const p1 = boundary[idx];
+            const p2 = boundary[(idx + 1) % boundary.length];
+            if (p1 && p2) {
+              const midLat = (p1.lat + p2.lat) / 2;
+              const midLng = (p1.lng + p2.lng) / 2;
+
+              const edgeIcon = L.divIcon({
+                className: 'survey-edge-badge',
+                html: `
+                  <div style="transform:translate(-50%, -50%); white-space:nowrap; pointer-events:none;">
+                    <span style="
+                      background:rgba(15, 23, 42, 0.92);
+                      backdrop-filter:blur(6px);
+                      color:#ffffff;
+                      font-size:9px;
+                      font-weight:800;
+                      font-family:ui-sans-serif, system-ui, sans-serif;
+                      padding:2px 6px;
+                      border-radius:9999px;
+                      border:1.5px solid ${edge.isRoadFacing ? '#38bdf8' : 'rgba(255,255,255,0.7)'};
+                      box-shadow:0 3px 10px rgba(0,0,0,0.3);
+                      display:inline-flex;
+                      align-items:center;
+                      gap:3px;
+                    ">
+                      ${edge.isRoadFacing ? '🛣️ ' : ''}${edge.lengthFt} ft
+                    </span>
+                  </div>
+                `,
+                iconSize: [0, 0],
+                iconAnchor: [0, 0]
+              });
+              L.marker([midLat, midLng], { icon: edgeIcon }).addTo(polygonLayerRef.current);
+            }
+          });
+        }
       } catch (err) {
         console.warn('renderSelectedBoundary error:', err);
       }
@@ -473,111 +581,124 @@ export default function GoogleMapGIS({
       />
 
       {/* TOP FLOATING ISLAND BAR */}
-      <div className="relative z-10 p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5 pointer-events-none">
+      <div className="relative z-10 p-2 sm:p-4 flex items-center justify-between gap-1.5 sm:gap-2.5 pointer-events-none">
         
-        {/* Left Side: Sidebar Toggle (if available) + Search Pill */}
-        <div className="flex items-center gap-2 pointer-events-auto">
+        {/* Left Side: Sidebar Toggle (if available) + Compact Search Pill */}
+        <div className="flex items-center gap-1.5 pointer-events-auto min-w-0">
           {onToggleSidebar && (
             <button
               onClick={onToggleSidebar}
-              className="hidden lg:flex items-center gap-1.5 bg-white/95 backdrop-blur-xl px-3 py-2 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-xs font-bold text-stone-800 hover:bg-stone-50 transition"
+              className="hidden lg:flex items-center gap-1.5 bg-white/95 backdrop-blur-xl px-3 py-1.5 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-xs font-bold text-stone-800 hover:bg-stone-50 transition shrink-0"
               title={isSidebarOpen ? 'Collapse Property List' : 'Show Property List'}
             >
               {isSidebarOpen ? (
                 <>
-                  <ChevronLeft className="w-4 h-4 text-stone-500" />
+                  <ChevronLeft className="w-3.5 h-3.5 text-stone-500" />
                   <span className="text-[11px]">Full Map</span>
                 </>
               ) : (
                 <>
-                  <ChevronRight className="w-4 h-4 text-stone-500" />
+                  <ChevronRight className="w-3.5 h-3.5 text-stone-500" />
                   <span className="text-[11px]">Show Feed</span>
                 </>
               )}
             </button>
           )}
 
-          {/* Search Input Floating Pill */}
+          {/* Search Input Floating Pill (Mobile-safe width) */}
           <form
             onSubmit={handleLocationSearch}
-            className="flex items-center bg-white/95 backdrop-blur-xl rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] px-3 py-1.5 w-44 sm:w-64 transition-all focus-within:w-56 sm:focus-within:w-72"
+            className="flex items-center bg-white/95 backdrop-blur-xl rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] px-2.5 py-1 w-32 xs:w-40 sm:w-56 transition-all focus-within:w-44 sm:focus-within:w-68 shrink-0"
           >
             <Search className="w-3.5 h-3.5 text-stone-400 shrink-0" />
             <input
               type="text"
               value={searchLocation}
               onChange={e => setSearchLocation(e.target.value)}
-              placeholder="Search Chennai, ECR, OMR, Coimbatore..."
-              className="w-full bg-transparent px-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none font-medium"
+              placeholder="Search TN..."
+              className="w-full bg-transparent px-1.5 text-[11px] text-stone-900 placeholder-stone-400 focus:outline-none font-medium"
             />
             {searchLocation && (
               <button
                 type="button"
                 onClick={() => setSearchLocation('')}
-                className="p-0.5 rounded-full text-stone-400 hover:text-stone-700 mr-1"
+                className="p-0.5 rounded-full text-stone-400 hover:text-stone-700 mr-0.5"
               >
-                <X className="w-3 h-3" />
+                <X className="w-2.5 h-2.5" />
               </button>
             )}
             <button
               type="submit"
               disabled={isSearching}
-              className="px-2.5 py-0.5 rounded-full bg-stone-900 text-white font-semibold text-[11px] transition hover:bg-stone-800 shrink-0"
+              className="px-2 py-0.5 rounded-full bg-stone-900 text-white font-semibold text-[10px] sm:text-[11px] transition hover:bg-stone-800 shrink-0"
             >
               {isSearching ? '...' : 'Go'}
             </button>
           </form>
         </div>
 
-        {/* Right Side: Map Layer Mode Switcher Pill */}
-        <div className="pointer-events-auto flex items-center gap-1 bg-white/95 backdrop-blur-xl p-1 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-xs font-semibold text-stone-700">
-          <button
-            onClick={() => changeMapType('hybrid')}
-            className={`px-3 py-1 rounded-full text-[11px] transition ${
-              mapType === 'hybrid' ? 'bg-stone-900 text-white shadow-xs' : 'hover:bg-stone-100 text-stone-600'
-            }`}
-          >
-            Satellite
-          </button>
-          <button
-            onClick={() => changeMapType('roadmap')}
-            className={`px-3 py-1 rounded-full text-[11px] transition ${
-              mapType === 'roadmap' ? 'bg-stone-900 text-white shadow-xs' : 'hover:bg-stone-100 text-stone-600'
-            }`}
-          >
-            Streets
-          </button>
+        {/* Right Side: 16 Plots button (if layout) + Satellite / Streets Pill */}
+        <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 shrink-0">
+          {selectedProperty?.isVentureLayout && onOpenMasterplan && (
+            <button
+              onClick={onOpenMasterplan}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] sm:text-[11px] font-bold shadow-xs transition"
+              title="Inspect 16 Layout Plots"
+            >
+              <Layers className="w-3 h-3 text-emerald-200" />
+              <span>16 Plots</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-0.5 bg-white/95 backdrop-blur-xl p-0.5 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-[10px] sm:text-xs font-semibold text-stone-700">
+            <button
+              onClick={() => changeMapType('hybrid')}
+              className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] transition ${
+                mapType === 'hybrid' ? 'bg-stone-900 text-white shadow-xs' : 'hover:bg-stone-100 text-stone-600'
+              }`}
+            >
+              Satellite
+            </button>
+            <button
+              onClick={() => changeMapType('roadmap')}
+              className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] transition ${
+                mapType === 'roadmap' ? 'bg-stone-900 text-white shadow-xs' : 'hover:bg-stone-100 text-stone-600'
+              }`}
+            >
+              Streets
+            </button>
+          </div>
         </div>
 
       </div>
 
       {/* RIGHT FLOATING TOOLSTRIP */}
-      <div className="absolute right-3 sm:right-4 top-16 z-20 flex flex-col gap-1.5 pointer-events-auto select-none">
+      <div className="absolute right-2 sm:right-4 top-13 sm:top-16 z-20 flex flex-col gap-1 pointer-events-auto select-none">
         
-        <div className="flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl border border-stone-200/80 shadow-[0_6px_20px_rgba(0,0,0,0.08)] p-1 divide-y divide-stone-100 text-stone-700">
+        <div className="flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] p-0.5 sm:p-1 divide-y divide-stone-100 text-stone-700">
           <button
             onClick={() => mapInstanceRef.current?.zoomIn()}
-            className="p-2 rounded-xl hover:bg-stone-100 transition"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-stone-100 transition"
             title="Zoom In"
           >
-            <ZoomIn className="w-4 h-4 text-stone-700" />
+            <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-700" />
           </button>
           <button
             onClick={() => mapInstanceRef.current?.zoomOut()}
-            className="p-2 rounded-xl hover:bg-stone-100 transition"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-stone-100 transition"
             title="Zoom Out"
           >
-            <ZoomOut className="w-4 h-4 text-stone-700" />
+            <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-700" />
           </button>
         </div>
 
-        <div className="flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl border border-stone-200/80 shadow-[0_6px_20px_rgba(0,0,0,0.08)] p-1 gap-1 text-stone-700">
+        <div className="flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] p-0.5 sm:p-1 gap-0.5 text-stone-700">
           <button
             onClick={handleLocateMe}
-            className="p-2 rounded-xl hover:bg-stone-100 text-stone-700 transition"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-stone-100 text-stone-700 transition"
             title="My Location"
           >
-            <Navigation className="w-4 h-4" />
+            <Navigation className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
 
           <button
@@ -585,22 +706,22 @@ export default function GoogleMapGIS({
               setIsDrawingMode(!isDrawingMode);
               if (isDrawingMode) setDrawnPoints([]);
             }}
-            className={`p-2 rounded-xl transition ${
+            className={`p-1.5 sm:p-2 rounded-xl transition ${
               isDrawingMode
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'hover:bg-stone-100 text-stone-700'
             }`}
             title="Measure / Draw Boundary"
           >
-            <Pencil className="w-4 h-4" />
+            <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
 
           <button
             onClick={toggleFullscreen}
-            className="p-2 rounded-xl hover:bg-stone-100 text-stone-700 transition"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-stone-100 text-stone-700 transition"
             title="Fullscreen"
           >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           </button>
         </div>
 
