@@ -11,7 +11,7 @@ import {
   ArrowRight,
   Compass
 } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/formatters';
+import { formatCurrency, formatNumber, formatIndianNumber } from '@/lib/formatters';
 
 interface PropertyCardProps {
   property: Property;
@@ -91,8 +91,8 @@ export default function PropertyCard({ property, onSelect, onSelectMasterplan }:
             <div className="text-base font-black text-stone-900 whitespace-nowrap" suppressHydrationWarning>
               {formatCurrency(property.price)}
             </div>
-            <div className="text-[10px] text-stone-400 font-medium whitespace-nowrap">
-              ${property.pricePerSqft.toFixed(2)}/sq ft
+            <div className="text-[10px] text-stone-400 font-medium whitespace-nowrap" suppressHydrationWarning>
+              ₹{formatIndianNumber(Math.round(property.pricePerSqft))}/sq ft
             </div>
           </div>
         </div>

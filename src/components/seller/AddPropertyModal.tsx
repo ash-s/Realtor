@@ -10,7 +10,7 @@ import {
   ShieldCheck,
   TreePine,
   Building2,
-  DollarSign,
+  IndianRupee,
   Layers,
   FileText,
   UploadCloud,
@@ -25,7 +25,7 @@ export default function AddPropertyModal() {
   const [channel, setChannel] = useState<ChannelType>('land_plot');
   const [title, setTitle] = useState('');
   const [subType, setSubType] = useState<PropertySubType>('residential_plot');
-  const [price, setPrice] = useState<number>(120000);
+  const [price, setPrice] = useState<number>(4500000);
   const [totalSqft, setTotalSqft] = useState<number>(15000);
   const [roadWidthFt, setRoadWidthFt] = useState<number>(40);
   const [facing, setFacing] = useState('East');
@@ -33,7 +33,7 @@ export default function AddPropertyModal() {
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [surveyNumber, setSurveyNumber] = useState('');
-  const [approvalType, setApprovalType] = useState<'DTCP' | 'HMDA' | 'RERA' | 'Panchayat' | 'Clear Title'>('DTCP');
+  const [approvalType, setApprovalType] = useState<'DTCP' | 'CMDA' | 'HMDA' | 'RERA' | 'Panchayat' | 'Clear Title'>('DTCP');
   const [description, setDescription] = useState('');
 
   if (!isAddPropertyModalOpen) return null;
@@ -59,18 +59,18 @@ export default function AddPropertyModal() {
       facing,
       zoning,
       location: {
-        lat: 37.7780,
-        lng: -122.4200,
+        lat: 12.8420,
+        lng: 80.0650,
         address,
-        city: city || 'San Francisco Bay Area',
-        state: 'California',
-        pincode: '94103'
+        city: city || 'Chengalpattu (Chennai Suburbs)',
+        state: 'Tamil Nadu',
+        pincode: '603202'
       },
       boundary: [
-        { lat: 37.7785, lng: -122.4210 },
-        { lat: 37.7790, lng: -122.4190 },
-        { lat: 37.7775, lng: -122.4185 },
-        { lat: 37.7770, lng: -122.4205 }
+        { lat: 12.8428, lng: 80.0642 },
+        { lat: 12.8431, lng: 80.0658 },
+        { lat: 12.8415, lng: 80.0661 },
+        { lat: 12.8412, lng: 80.0645 }
       ],
       edgeMeasurements: [
         { from: 'A', to: 'B', sideName: 'North Side', lengthFt: 120 },
@@ -180,7 +180,7 @@ export default function AddPropertyModal() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-bold mb-1">Asking Price ($) *</label>
+                  <label className="block text-slate-700 font-bold mb-1">Asking Price (₹) *</label>
                   <input
                     type="number"
                     required
@@ -263,7 +263,7 @@ export default function AddPropertyModal() {
                   required
                   value={address}
                   onChange={e => setAddress(e.target.value)}
-                  placeholder="e.g. Survey 88, Palm Meadows Avenue, Sector 12"
+                  placeholder="e.g. Survey 302/2A, GST Road, Guduvanchery"
                   className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-blue-500 text-xs font-medium"
                 />
               </div>
@@ -275,7 +275,7 @@ export default function AddPropertyModal() {
                     type="text"
                     value={city}
                     onChange={e => setCity(e.target.value)}
-                    placeholder="e.g. Sonoma County / Bay Area"
+                    placeholder="e.g. Chengalpattu / Chennai / Coimbatore"
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-blue-500 text-xs font-medium"
                   />
                 </div>
@@ -301,8 +301,8 @@ export default function AddPropertyModal() {
                   className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-blue-500 text-xs font-medium"
                 >
                   <option value="DTCP">DTCP Approved (Town & Country Planning)</option>
-                  <option value="HMDA">HMDA / Urban Development Authority</option>
-                  <option value="RERA">RERA Registered</option>
+                  <option value="CMDA">CMDA Approved (Chennai Metropolitan Area)</option>
+                  <option value="RERA">TNRERA Registered</option>
                   <option value="Clear Title">Clear Title / Revenue Patta</option>
                   <option value="Panchayat">Panchayat Approved</option>
                 </select>

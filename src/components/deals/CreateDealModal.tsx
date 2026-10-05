@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/lib/store';
-import { X, ShieldCheck, Calendar, DollarSign, User, Phone, Mail, CheckCircle2, Lock } from 'lucide-react';
+import { X, ShieldCheck, Calendar, IndianRupee, User, Phone, Mail, CheckCircle2, Lock } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 
 export default function CreateDealModal() {
@@ -107,7 +107,7 @@ export default function CreateDealModal() {
                     required
                     value={buyerPhone}
                     onChange={e => setBuyerPhone(e.target.value)}
-                    placeholder="+1 (555) 000-0000"
+                    placeholder="+91 98400 12345"
                     className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition font-mono font-medium"
                   />
                 </div>
@@ -131,9 +131,9 @@ export default function CreateDealModal() {
             {/* Offer & Visit Date */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-slate-700 font-bold mb-1">Offer Price ($)</label>
+                <label className="block text-slate-700 font-bold mb-1">Offer Price (₹)</label>
                 <div className="relative">
-                  <DollarSign className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  <IndianRupee className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                   <input
                     type="number"
                     value={offerPrice}

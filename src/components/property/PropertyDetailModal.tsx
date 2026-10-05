@@ -17,7 +17,7 @@ import {
   ArrowRight,
   MessageSquare
 } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/formatters';
+import { formatCurrency, formatNumber, formatIndianNumber } from '@/lib/formatters';
 
 export default function PropertyDetailModal() {
   const {
@@ -104,8 +104,8 @@ export default function PropertyDetailModal() {
               <div className="text-2xl font-extrabold text-slate-900" suppressHydrationWarning>
                 {formatCurrency(selectedProperty.price)}
               </div>
-              <div className="text-xs text-emerald-700 font-bold font-mono">
-                ${selectedProperty.pricePerSqft.toFixed(2)} / sq ft • Total: {formatNumber(selectedProperty.totalSqft)} sq ft
+              <div className="text-xs text-emerald-700 font-bold font-mono" suppressHydrationWarning>
+                ₹{formatIndianNumber(Math.round(selectedProperty.pricePerSqft))} / sq ft • Total: {formatNumber(selectedProperty.totalSqft)} sq ft
               </div>
             </div>
           </div>

@@ -14,7 +14,7 @@ import {
   Map as MapIcon,
   Check
 } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/formatters';
+import { formatCurrency, formatNumber, formatCompactINR, formatIndianNumber } from '@/lib/formatters';
 
 interface VentureLayoutExplorerProps {
   onBackToMap?: () => void;
@@ -196,8 +196,8 @@ export default function VentureLayoutExplorer({ onBackToMap }: VentureLayoutExpl
                             <div className="truncate">{plot.sqft} sq ft</div>
                             <div className="text-[9px] text-stone-400 truncate">{plot.dimensions.split(' ')[0]}</div>
                           </div>
-                          <div className="text-[10px] font-bold text-stone-800 truncate">
-                            ${(plot.price / 1000).toFixed(0)}k
+                          <div className="text-[10px] font-bold text-stone-800 truncate" suppressHydrationWarning>
+                            {formatCompactINR(plot.price)}
                           </div>
                         </button>
                       );
@@ -252,8 +252,8 @@ export default function VentureLayoutExplorer({ onBackToMap }: VentureLayoutExpl
                             <div className="truncate">{plot.sqft} sq ft</div>
                             <div className="text-[9px] text-stone-400 truncate">{plot.dimensions.split(' ')[0]}</div>
                           </div>
-                          <div className="text-[10px] font-bold text-stone-800 truncate">
-                            ${(plot.price / 1000).toFixed(0)}k
+                          <div className="text-[10px] font-bold text-stone-800 truncate" suppressHydrationWarning>
+                            {formatCompactINR(plot.price)}
                           </div>
                         </button>
                       );
@@ -336,8 +336,8 @@ export default function VentureLayoutExplorer({ onBackToMap }: VentureLayoutExpl
               <div className="text-xl font-black text-stone-900" suppressHydrationWarning>
                 {formatCurrency(selectedPlot.price)}
               </div>
-              <div className="text-[11px] text-stone-400 font-medium">
-                ${(selectedPlot.price / selectedPlot.sqft).toFixed(2)} / sq ft
+              <div className="text-[11px] text-stone-500 font-medium" suppressHydrationWarning>
+                ₹{formatIndianNumber(Math.round(selectedPlot.price / selectedPlot.sqft))} / sq ft
               </div>
             </div>
           </div>

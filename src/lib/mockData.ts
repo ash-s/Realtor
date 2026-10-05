@@ -3,55 +3,55 @@ import { Property, DealTicket, KycRecord } from '@/types';
 export const INITIAL_PROPERTIES: Property[] = [
   {
     id: 'prop-1',
-    title: 'Palm Valley Gated Venture (Phase 1)',
-    description: 'Premier DTCP approved plotted venture with 40 ft tar roads, underground electricity, borewell water points, and compound wall. Ideal for immediate villa construction or high-return land banking.',
+    title: 'Ananya Palm Meadows DTCP Plotted Township',
+    description: 'Premier DTCP & TNRERA approved gated plotted township situated along the rapid Guduvanchery–Chengalpattu growth corridor. Features 40-ft wide blacktop roads, underground EB infrastructure, continuous potable water points, 24/7 security arch, landscaped avenue plantation, and clear marketable title. Just 10 minutes from Kilambakkam KCBT bus terminus and GST Road.',
     channel: 'land_plot',
     subType: 'residential_plot',
-    price: 145000,
-    totalSqft: 19800,
-    pricePerSqft: 7.32,
+    price: 4800000,
+    totalSqft: 38400,
+    pricePerSqft: 2000,
     roadWidthFt: 40,
     facing: 'North-East',
-    zoning: 'Residential (R1 Plotted)',
+    zoning: 'Residential Plotted (DTCP Sanctioned)',
     location: {
-      lat: 37.7749,
-      lng: -122.4194,
-      address: 'Plot #414, Palm Valley Venture, Sector 12',
-      city: 'San Francisco Bay Area',
-      state: 'California',
-      pincode: '94103'
+      lat: 12.8420,
+      lng: 80.0650,
+      address: 'Survey No. 302/2A, GST Road Extension, Guduvanchery',
+      city: 'Chengalpattu (Chennai Suburbs)',
+      state: 'Tamil Nadu',
+      pincode: '603202'
     },
     boundary: [
-      { lat: 37.7755, lng: -122.4202 },
-      { lat: 37.7758, lng: -122.4185 },
-      { lat: 37.7742, lng: -122.4182 },
-      { lat: 37.7740, lng: -122.4199 }
+      { lat: 12.8428, lng: 80.0642 },
+      { lat: 12.8431, lng: 80.0658 },
+      { lat: 12.8415, lng: 80.0661 },
+      { lat: 12.8412, lng: 80.0645 }
     ],
     edgeMeasurements: [
-      { from: 'Point A', to: 'Point B', sideName: 'North Side', lengthFt: 140 },
-      { from: 'Point B', to: 'Point C', sideName: 'East Side', lengthFt: 180 },
-      { from: 'Point C', to: 'Point D', sideName: 'South Side', lengthFt: 150 },
-      { from: 'Point D', to: 'Point A', sideName: 'Road Frontage', lengthFt: 160, isRoadFacing: true }
+      { from: 'Point A', to: 'Point B', sideName: 'North Boundary', lengthFt: 180 },
+      { from: 'Point B', to: 'Point C', sideName: 'East Boundary', lengthFt: 220 },
+      { from: 'Point C', to: 'Point D', sideName: 'South Boundary', lengthFt: 190 },
+      { from: 'Point D', to: 'Point A', sideName: '40ft Approach Road Frontage', lengthFt: 200, isRoadFacing: true }
     ],
     isVentureLayout: true,
-    ventureName: 'Palm Valley Plotted Township',
+    ventureName: 'Ananya Palm Meadows Township',
     venturePlots: [
-      { id: 'vp-101', plotNumber: '101', sqft: 2400, price: 48000, status: 'available', facing: 'North-East', dimensions: '30x80 ft' },
-      { id: 'vp-102', plotNumber: '102', sqft: 1800, price: 36000, status: 'available', facing: 'East', dimensions: '30x60 ft' },
-      { id: 'vp-103', plotNumber: '103', sqft: 3000, price: 60000, status: 'reserved', facing: 'Corner', dimensions: '50x60 ft' },
-      { id: 'vp-104', plotNumber: '104', sqft: 2400, price: 48000, status: 'sold', facing: 'North', dimensions: '30x80 ft' },
-      { id: 'vp-105', plotNumber: '105', sqft: 1500, price: 30000, status: 'available', facing: 'West', dimensions: '30x50 ft' },
-      { id: 'vp-106', plotNumber: '106', sqft: 1500, price: 30000, status: 'sold', facing: 'West', dimensions: '30x50 ft' },
-      { id: 'vp-107', plotNumber: '107', sqft: 2100, price: 42000, status: 'available', facing: 'South', dimensions: '35x60 ft' },
-      { id: 'vp-108', plotNumber: '108', sqft: 3600, price: 72000, status: 'available', facing: 'Corner', dimensions: '60x60 ft' },
-      { id: 'vp-109', plotNumber: '109', sqft: 2400, price: 48000, status: 'available', facing: 'East', dimensions: '30x80 ft' },
-      { id: 'vp-110', plotNumber: '110', sqft: 1800, price: 36000, status: 'available', facing: 'North', dimensions: '30x60 ft' },
-      { id: 'vp-111', plotNumber: '111', sqft: 2400, price: 48000, status: 'reserved', facing: 'East', dimensions: '30x80 ft' },
-      { id: 'vp-112', plotNumber: '112', sqft: 3000, price: 60000, status: 'available', facing: 'Corner', dimensions: '50x60 ft' },
-      { id: 'vp-113', plotNumber: '113', sqft: 2000, price: 40000, status: 'available', facing: 'North', dimensions: '40x50 ft' },
-      { id: 'vp-114', plotNumber: '114', sqft: 1500, price: 30000, status: 'sold', facing: 'South', dimensions: '30x50 ft' },
-      { id: 'vp-115', plotNumber: '115', sqft: 2400, price: 48000, status: 'available', facing: 'East', dimensions: '30x80 ft' },
-      { id: 'vp-116', plotNumber: '116', sqft: 3200, price: 64000, status: 'available', facing: 'Corner', dimensions: '40x80 ft' }
+      { id: 'vp-101', plotNumber: '101', sqft: 2400, price: 4800000, status: 'available', facing: 'North-East', dimensions: '30x80 ft' },
+      { id: 'vp-102', plotNumber: '102', sqft: 1800, price: 3600000, status: 'available', facing: 'East', dimensions: '30x60 ft' },
+      { id: 'vp-103', plotNumber: '103', sqft: 3000, price: 6000000, status: 'reserved', facing: 'Corner', dimensions: '50x60 ft' },
+      { id: 'vp-104', plotNumber: '104', sqft: 2400, price: 4800000, status: 'sold', facing: 'North', dimensions: '30x80 ft' },
+      { id: 'vp-105', plotNumber: '105', sqft: 1500, price: 3000000, status: 'available', facing: 'West', dimensions: '30x50 ft' },
+      { id: 'vp-106', plotNumber: '106', sqft: 1500, price: 3000000, status: 'sold', facing: 'West', dimensions: '30x50 ft' },
+      { id: 'vp-107', plotNumber: '107', sqft: 2100, price: 4200000, status: 'available', facing: 'South', dimensions: '35x60 ft' },
+      { id: 'vp-108', plotNumber: '108', sqft: 3600, price: 7200000, status: 'available', facing: 'Corner', dimensions: '60x60 ft' },
+      { id: 'vp-109', plotNumber: '109', sqft: 2400, price: 4800000, status: 'available', facing: 'East', dimensions: '30x80 ft' },
+      { id: 'vp-110', plotNumber: '110', sqft: 1800, price: 3600000, status: 'available', facing: 'North', dimensions: '30x60 ft' },
+      { id: 'vp-111', plotNumber: '111', sqft: 2400, price: 4800000, status: 'reserved', facing: 'East', dimensions: '30x80 ft' },
+      { id: 'vp-112', plotNumber: '112', sqft: 3000, price: 6000000, status: 'available', facing: 'Corner', dimensions: '50x60 ft' },
+      { id: 'vp-113', plotNumber: '113', sqft: 2000, price: 4000000, status: 'available', facing: 'North', dimensions: '40x50 ft' },
+      { id: 'vp-114', plotNumber: '114', sqft: 1500, price: 3000000, status: 'sold', facing: 'South', dimensions: '30x50 ft' },
+      { id: 'vp-115', plotNumber: '115', sqft: 2400, price: 4800000, status: 'available', facing: 'East', dimensions: '30x80 ft' },
+      { id: 'vp-116', plotNumber: '116', sqft: 3200, price: 6400000, status: 'available', facing: 'Corner', dimensions: '40x80 ft' }
     ],
     images: [
       'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1200&auto=format&fit=crop',
@@ -61,13 +61,13 @@ export const INITIAL_PROPERTIES: Property[] = [
     verification: {
       isVerified: true,
       approvalType: 'DTCP',
-      approvalNumber: 'DTCP/2026/LP-492',
-      surveyNumber: '302/2A',
+      approvalNumber: 'DTCP/TN/2026/LP-492',
+      surveyNumber: '302/2A (Patta #1842)',
       titleDeedVerified: true
     },
     seller: {
       id: 'usr-dev-1',
-      name: 'Terraform Developers Corp',
+      name: 'Srinivasan Developers (TN DTCP Promoter)',
       entityType: 'company',
       isKycVerified: true
     },
@@ -77,35 +77,35 @@ export const INITIAL_PROPERTIES: Property[] = [
   },
   {
     id: 'prop-2',
-    title: 'Emerald Ridge Farmhouse Land Parcel',
-    description: 'Picturesque fertile agricultural & farmhouse parcel with perennial groundwater, 2.5-inch borewell, and 30-ft metalled approach road. Surrounded by teak trees and organic estates.',
+    title: 'Western Ghats Foothills Organic Farmhouse Land',
+    description: 'Spectacular fertile 1-Acre agricultural & agro-tourism parcel with panoramic vistas of the Anaimalai Western Ghats hills. Fully secured perimeter, perennial sweet groundwater with 2.5-inch operational borewell, free agricultural EB service connection, 30-ft tar road access, and coconut/teak plantation on rich organic red soil.',
     channel: 'land_plot',
     subType: 'farmhouse_land',
-    price: 92000,
+    price: 9200000,
     totalSqft: 43560, // 1 Acre
-    pricePerSqft: 2.11,
+    pricePerSqft: 211.2,
     roadWidthFt: 30,
     facing: 'East',
-    zoning: 'Agricultural / Farmhouse Eligible',
+    zoning: 'Agricultural / Agro-Tourism Eligible',
     location: {
-      lat: 37.7812,
-      lng: -122.4285,
-      address: 'Survey 118, Valley View Road',
-      city: 'Sonoma Countryside',
-      state: 'California',
-      pincode: '94576'
+      lat: 10.6625,
+      lng: 77.0125,
+      address: 'Survey No. 118/4B, Pollachi-Valparai Highway Corridor',
+      city: 'Pollachi (Coimbatore District)',
+      state: 'Tamil Nadu',
+      pincode: '642001'
     },
     boundary: [
-      { lat: 37.7820, lng: -122.4295 },
-      { lat: 37.7825, lng: -122.4270 },
-      { lat: 37.7805, lng: -122.4265 },
-      { lat: 37.7800, lng: -122.4290 }
+      { lat: 10.6632, lng: 77.0118 },
+      { lat: 10.6636, lng: 77.0135 },
+      { lat: 10.6618, lng: 77.0132 },
+      { lat: 10.6614, lng: 77.0115 }
     ],
     edgeMeasurements: [
       { from: 'P1', to: 'P2', sideName: 'North Boundary', lengthFt: 210 },
       { from: 'P2', to: 'P3', sideName: 'East Canal Border', lengthFt: 220 },
       { from: 'P3', to: 'P4', sideName: 'South Boundary', lengthFt: 200 },
-      { from: 'P4', to: 'P1', sideName: 'Road Access', lengthFt: 215, isRoadFacing: true }
+      { from: 'P4', to: 'P1', sideName: '30ft Road Access', lengthFt: 215, isRoadFacing: true }
     ],
     images: [
       'https://images.unsplash.com/photo-1500076656116-558758c991c1?q=80&w=1200&auto=format&fit=crop',
@@ -114,13 +114,13 @@ export const INITIAL_PROPERTIES: Property[] = [
     verification: {
       isVerified: true,
       approvalType: 'Clear Title',
-      approvalNumber: 'REV/SON/7-12-884',
-      surveyNumber: '118/4B',
+      approvalNumber: 'REV/TN/CBE-7-12-884',
+      surveyNumber: '118/4B (Patta #429)',
       titleDeedVerified: true
     },
     seller: {
       id: 'usr-seller-2',
-      name: 'Robert Hastings (Individual Owner)',
+      name: 'Dr. R. Natarajan (Individual Patta Owner)',
       entityType: 'individual',
       isKycVerified: true
     },
@@ -130,29 +130,29 @@ export const INITIAL_PROPERTIES: Property[] = [
   },
   {
     id: 'prop-3',
-    title: 'The Obsidian Ultra-Luxury Modern Villa',
-    description: 'Architectural masterpiece constructed over 6,200 sq ft. Features floor-to-ceiling glass, infinity swimming pool, Italian marble flooring, 5 ensuite bedrooms, and private elevator.',
+    title: 'The Azure Sands Oceanfront Luxury Villa',
+    description: 'Palatial 6,200 sq ft sea-facing architectural masterpiece located along premier Akkarai on Chennai’s coveted East Coast Road (ECR). Features floor-to-ceiling panoramic glass, private heated infinity pool, Italian statuario marble floors, 5 lavish ensuite master bedrooms, private internal Otis elevator, rooftop sunset deck, and direct private beach access.',
     channel: 'constructed',
     subType: 'luxury_villa',
-    price: 1850000,
+    price: 48500000,
     totalSqft: 6200,
-    pricePerSqft: 298.38,
+    pricePerSqft: 7822.58,
     roadWidthFt: 50,
-    facing: 'North',
-    zoning: 'Residential Ultra-Luxury',
+    facing: 'East (Ocean Facing)',
+    zoning: 'Residential Beachfront Luxury (CMDA Approved)',
     location: {
-      lat: 37.7695,
-      lng: -122.4468,
-      address: '42 Obsidian Hillview Drive',
-      city: 'San Francisco',
-      state: 'California',
-      pincode: '94114'
+      lat: 12.9050,
+      lng: 80.2520,
+      address: '18 Sea Cliff Avenue, Akkarai, ECR',
+      city: 'Chennai (ECR Coastal Belt)',
+      state: 'Tamil Nadu',
+      pincode: '600119'
     },
     boundary: [
-      { lat: 37.7700, lng: -122.4475 },
-      { lat: 37.7702, lng: -122.4460 },
-      { lat: 37.7690, lng: -122.4458 },
-      { lat: 37.7688, lng: -122.4472 }
+      { lat: 12.9055, lng: 80.2514 },
+      { lat: 12.9058, lng: 80.2528 },
+      { lat: 12.9044, lng: 80.2526 },
+      { lat: 12.9042, lng: 80.2512 }
     ],
     images: [
       'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop',
@@ -161,14 +161,14 @@ export const INITIAL_PROPERTIES: Property[] = [
     ],
     verification: {
       isVerified: true,
-      approvalType: 'RERA',
-      approvalNumber: 'RERA-CA-2025-0091',
-      surveyNumber: '88/1',
+      approvalType: 'CMDA',
+      approvalNumber: 'CMDA/PP/MSB/2025/088',
+      surveyNumber: '88/1 (Patta #1204)',
       titleDeedVerified: true
     },
     seller: {
       id: 'usr-broker-1',
-      name: 'Apex Luxury Estates (Authorized Broker)',
+      name: 'Apex Southern Luxury Realty (TNRERA Agent)',
       entityType: 'broker',
       isKycVerified: true
     },
@@ -178,35 +178,35 @@ export const INITIAL_PROPERTIES: Property[] = [
   },
   {
     id: 'prop-4',
-    title: 'Silicon Vista Commercial Expressway Plot',
-    description: 'High-visibility 2.2 Acre commercial land plot directly abutting the 100 ft 6-lane express corridor. Approved for IT tech park, commercial complex, or showroom development.',
+    title: 'Siruseri IT Expressway Commercial Tech Park Plot',
+    description: 'High-visibility 2.2 Acre prime commercial land parcel directly fronting the 6-lane Rajiv Gandhi Salai (OMR IT Expressway), adjacent to Siruseri SIPCOT IT SEZ and upcoming Metro Phase 2 station. Sanctioned with CMDA commercial zoning for Grade-A IT/ITES tech parks, corporate headquarters, or multi-specialty healthcare.',
     channel: 'land_plot',
     subType: 'commercial_plot',
-    price: 520000,
+    price: 145000000,
     totalSqft: 95832,
-    pricePerSqft: 5.42,
-    roadWidthFt: 100,
-    facing: 'North-East (Highway Facing)',
-    zoning: 'Commercial High Density',
+    pricePerSqft: 1513.06,
+    roadWidthFt: 120,
+    facing: 'North-East (120-ft OMR Frontage)',
+    zoning: 'Commercial / IT High Density (CMDA Approved)',
     location: {
-      lat: 37.7850,
-      lng: -122.4080,
-      address: 'Expressway Gateway Sector 8',
-      city: 'Silicon Valley Corridor',
-      state: 'California',
-      pincode: '94025'
+      lat: 12.8350,
+      lng: 80.2220,
+      address: 'Plot #14, OMR IT Expressway Corridor, Siruseri SIPCOT',
+      city: 'Chennai (OMR IT Corridor)',
+      state: 'Tamil Nadu',
+      pincode: '603103'
     },
     boundary: [
-      { lat: 37.7860, lng: -122.4095 },
-      { lat: 37.7865, lng: -122.4065 },
-      { lat: 37.7840, lng: -122.4060 },
-      { lat: 37.7835, lng: -122.4090 }
+      { lat: 12.8360, lng: 80.2210 },
+      { lat: 12.8365, lng: 80.2235 },
+      { lat: 12.8340, lng: 80.2230 },
+      { lat: 12.8335, lng: 80.2205 }
     ],
     edgeMeasurements: [
       { from: 'C1', to: 'C2', sideName: 'North Boundary', lengthFt: 350 },
       { from: 'C2', to: 'C3', sideName: 'East Commercial Border', lengthFt: 280 },
       { from: 'C3', to: 'C4', sideName: 'South Boundary', lengthFt: 340 },
-      { from: 'C4', to: 'C1', sideName: '100ft Highway Frontage', lengthFt: 290, isRoadFacing: true }
+      { from: 'C4', to: 'C1', sideName: '120ft Highway Frontage', lengthFt: 290, isRoadFacing: true }
     ],
     images: [
       'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1200&auto=format&fit=crop',
@@ -214,14 +214,14 @@ export const INITIAL_PROPERTIES: Property[] = [
     ],
     verification: {
       isVerified: true,
-      approvalType: 'HMDA',
-      approvalNumber: 'HMDA-COM-2026-771',
-      surveyNumber: '442/A',
+      approvalType: 'CMDA',
+      approvalNumber: 'CMDA-COM-TN-2026-771',
+      surveyNumber: '442/A (Patta #3108)',
       titleDeedVerified: true
     },
     seller: {
       id: 'usr-dev-2',
-      name: 'Skyline Infrastructure Ltd',
+      name: 'Tamil Nadu Infrastructure & Realty Ltd',
       entityType: 'company',
       isKycVerified: true
     },
@@ -235,59 +235,59 @@ export const INITIAL_DEAL_TICKETS: DealTicket[] = [
   {
     id: 'deal-001',
     propertyId: 'prop-1',
-    propertyTitle: 'Palm Valley Gated Venture (Phase 1)',
+    propertyTitle: 'Ananya Palm Meadows DTCP Plotted Township',
     plotNumber: 'Plot #103',
     channel: 'land_plot',
-    buyerName: 'David Vance (Individual Investor)',
-    buyerPhone: '+1 (555) 392-1084',
-    buyerEmail: 'david.vance@investcapital.com',
-    buyerMessage: 'Hello Admin, I would like to arrange an escorted site inspection for Plot #103 this Saturday. Please confirm the licensed surveyor availability and DTCP sanction documents.',
+    buyerName: 'Karthik Subramanian (NRI Investor)',
+    buyerPhone: '+91 98401 22934',
+    buyerEmail: 'karthik.subramanian@chennaicapital.com',
+    buyerMessage: 'Hello Admin, I would like to arrange an escorted site inspection for Plot #103 this Saturday. Please confirm the licensed cadastral surveyor availability and DTCP sanction drawings.',
     messages: [
       {
         id: 'msg-001',
         senderRole: 'buyer',
-        senderName: 'David Vance',
-        text: 'Hello Admin, I would like to arrange an escorted site inspection for Plot #103 this Saturday. Please confirm the licensed surveyor availability and DTCP sanction documents.',
+        senderName: 'Karthik Subramanian',
+        text: 'Hello Admin, I would like to arrange an escorted site inspection for Plot #103 this Saturday. Please confirm the licensed cadastral surveyor availability and DTCP sanction drawings.',
         timestamp: '2026-10-02T16:20:00Z'
       },
       {
         id: 'msg-002',
         senderRole: 'admin',
         senderName: 'Sarah Jenkins (Admin Concierge)',
-        text: 'Hello David! Site survey confirmed for Saturday 10:30 AM. Cadastral surveyor #104 will meet you at the site with boundary instruments.',
+        text: 'Vanakkam Karthik! Site survey confirmed for Saturday 10:30 AM at Guduvanchery. Cadastral surveyor #104 will meet you at the site with GPS boundary instruments and Patta records.',
         timestamp: '2026-10-03T09:00:00Z'
       }
     ],
-    offerPrice: 58000,
+    offerPrice: 5800000,
     commissionRate: 2.0,
     stage: 'site_visit_scheduled',
     scheduledVisitDate: '2026-10-08T10:30:00Z',
-    adminNotes: 'Buyer wants an on-site physical survey inspection with in-house broker. Verified pre-approved financing.',
+    adminNotes: 'Buyer wants an on-site physical survey inspection with in-house broker. Verified pre-approved HDFC Bank home/plot loan.',
     createdAt: '2026-10-02T16:20:00Z'
   },
   {
     id: 'deal-002',
     propertyId: 'prop-3',
-    propertyTitle: 'The Obsidian Ultra-Luxury Modern Villa',
+    propertyTitle: 'The Azure Sands Oceanfront Luxury Villa',
     channel: 'constructed',
-    buyerName: 'Elena Rostova',
-    buyerPhone: '+1 (555) 774-9921',
-    buyerEmail: 'elena.rostova@vipestates.org',
-    buyerMessage: 'Can you please provide the 30-year Encumbrance Certificate (EC) and verify the RERA title deed before I place the token escrow?',
+    buyerName: 'Ananya Ramachandran',
+    buyerPhone: '+91 94440 88712',
+    buyerEmail: 'ananya.ramachandran@ecrvip.org',
+    buyerMessage: 'Can you please provide the 30-year Encumbrance Certificate (EC) from Neelankarai Sub-Registrar Office and verify the CMDA title deed before I place the token escrow?',
     messages: [
       {
         id: 'msg-003',
         senderRole: 'buyer',
-        senderName: 'Elena Rostova',
-        text: 'Can you please provide the 30-year Encumbrance Certificate (EC) and verify the RERA title deed before I place the token escrow?',
+        senderName: 'Ananya Ramachandran',
+        text: 'Can you please provide the 30-year Encumbrance Certificate (EC) from Neelankarai Sub-Registrar Office and verify the CMDA title deed before I place the token escrow?',
         timestamp: '2026-10-03T11:45:00Z'
       }
     ],
-    offerPrice: 1800000,
+    offerPrice: 48000000,
     commissionRate: 1.5,
     stage: 'legal_verification',
     scheduledVisitDate: '2026-10-06T15:00:00Z',
-    adminNotes: 'Title search report requested. Legal team is reviewing encumbrance certificate (EC) from sub-registrar office.',
+    adminNotes: 'Title search report requested. Legal team is reviewing 30-year EC from Neelankarai SRO and verifying Coastal Regulation Zone (CRZ) clearances.',
     createdAt: '2026-10-03T11:45:00Z'
   }
 ];
@@ -296,18 +296,18 @@ export const INITIAL_KYC_RECORDS: KycRecord[] = [
   {
     id: 'kyc-101',
     userId: 'usr-broker-99',
-    userName: 'Marcus Sterling',
+    userName: 'M. Senthil Kumar',
     entityType: 'broker',
     idType: 'rera_license',
-    idNumber: 'RERA-CA-BRK-88192',
-    documentUrl: 'https://vault.internal/kyc/rera_marcus_2026.pdf',
+    idNumber: 'TNRERA/AGENT/2026/0412',
+    documentUrl: 'https://vault.internal/kyc/tnrera_senthil_2026.pdf',
     status: 'pending',
     submittedAt: '2026-10-03T18:00:00Z'
   },
   {
     id: 'kyc-102',
     userId: 'usr-seller-42',
-    userName: 'Priya Sharma',
+    userName: 'Priya Sundaram',
     entityType: 'individual',
     idType: 'aadhaar',
     idNumber: 'XXXX-XXXX-8921',

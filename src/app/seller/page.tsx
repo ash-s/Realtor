@@ -14,7 +14,7 @@ import {
   LogOut,
   Layers,
   FileText,
-  DollarSign,
+  IndianRupee,
   UserCheck,
   ArrowRight
 } from 'lucide-react';

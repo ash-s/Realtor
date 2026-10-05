@@ -236,7 +236,7 @@ export default function BuyerDashboardPage() {
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                         <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                        <span>San Francisco Bay Area • Survey #302/2A</span>
+                        <span>Chengalpattu (Chennai Suburbs) • Survey #302/2A</span>
                       </p>
                     </div>
 
@@ -476,7 +476,7 @@ export default function BuyerDashboardPage() {
                     </div>
                     <div>
                       <h4 className="font-bold text-sm text-slate-900">DTCP Sanctioned Layout Blueprint</h4>
-                      <p className="text-xs text-slate-500">Palm Valley Phase 1 • LP-492/2026</p>
+                      <p className="text-xs text-slate-500">Ananya Palm Meadows • DTCP/TN/LP-492/2026</p>
                     </div>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
@@ -503,7 +503,7 @@ export default function BuyerDashboardPage() {
                     </div>
                     <div>
                       <h4 className="font-bold text-sm text-slate-900">30-Year Encumbrance Search (EC)</h4>
-                      <p className="text-xs text-slate-500">Survey 118/4B • Sonoma County</p>
+                      <p className="text-xs text-slate-500">Survey 118/4B • Pollachi (Coimbatore District)</p>
                     </div>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">

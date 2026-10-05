@@ -12,7 +12,7 @@ import {
   Phone,
   Mail,
   Calendar,
-  DollarSign,
+  IndianRupee,
   ArrowRight,
   TrendingUp,
   FileText,

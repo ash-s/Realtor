@@ -19,7 +19,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Property } from '@/types';
-import { formatCurrency, formatNumber } from '@/lib/formatters';
+import { formatCurrency, formatNumber, formatCompactINR } from '@/lib/formatters';
 
 type MapLayerType = 'hybrid' | 'satellite' | 'roadmap';
 
@@ -62,8 +62,8 @@ export default function GoogleMapGIS({
   const [isMapReady, setIsMapReady] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const centerLat = selectedProperty?.location.lat || 37.7749;
-  const centerLng = selectedProperty?.location.lng || -122.4194;
+  const centerLat = selectedProperty?.location.lat || 12.8420;
+  const centerLng = selectedProperty?.location.lng || 80.0650;
 
   const getGoogleTileUrl = (type: MapLayerType) => {
     switch (type) {
@@ -288,7 +288,7 @@ export default function GoogleMapGIS({
 
         properties.forEach(prop => {
           const isSelected = selectedProperty?.id === prop.id;
-          const formattedPrice = formatCurrency(prop.price);
+          const formattedPrice = formatCompactINR(prop.price);
 
           const pinIcon = L.divIcon({
             className: 'luxury-price-pin',
@@ -416,13 +416,18 @@ export default function GoogleMapGIS({
         mapInstanceRef.current.flyTo([parseFloat(data[0].lat), parseFloat(data[0].lon)], 16, { duration: 1.4 });
       } else {
         const lower = query.toLowerCase();
-        if (lower.includes('austin')) mapInstanceRef.current.flyTo([30.2672, -97.7431], 16);
-        else if (lower.includes('beverly')) mapInstanceRef.current.flyTo([34.0736, -118.4004], 16);
-        else if (lower.includes('miami')) mapInstanceRef.current.flyTo([25.7617, -80.1918], 16);
-        else mapInstanceRef.current.flyTo([37.7749, -122.4194], 16);
+        if (lower.includes('chennai') || lower.includes('madras')) mapInstanceRef.current.flyTo([12.9800, 80.2200], 15);
+        else if (lower.includes('coimbatore') || lower.includes('kovai')) mapInstanceRef.current.flyTo([11.0168, 76.9558], 15);
+        else if (lower.includes('guduvanchery') || lower.includes('chengalpattu')) mapInstanceRef.current.flyTo([12.8420, 80.0650], 16);
+        else if (lower.includes('ecr') || lower.includes('akkarai') || lower.includes('beach')) mapInstanceRef.current.flyTo([12.9050, 80.2520], 16);
+        else if (lower.includes('omr') || lower.includes('siruseri') || lower.includes('sholinganallur')) mapInstanceRef.current.flyTo([12.8350, 80.2220], 16);
+        else if (lower.includes('pollachi') || lower.includes('anaimalai')) mapInstanceRef.current.flyTo([10.6625, 77.0125], 16);
+        else if (lower.includes('madurai')) mapInstanceRef.current.flyTo([9.9252, 78.1198], 15);
+        else if (lower.includes('trichy') || lower.includes('tiruchirappalli')) mapInstanceRef.current.flyTo([10.7905, 78.7047], 15);
+        else mapInstanceRef.current.flyTo([12.8420, 80.0650], 15);
       }
     } catch {
-      mapInstanceRef.current.flyTo([37.7749, -122.4194], 16);
+      mapInstanceRef.current.flyTo([12.8420, 80.0650], 15);
     } finally {
       setIsSearching(false);
     }
@@ -502,7 +507,7 @@ export default function GoogleMapGIS({
               type="text"
               value={searchLocation}
               onChange={e => setSearchLocation(e.target.value)}
-              placeholder="Search area..."
+              placeholder="Search Chennai, ECR, OMR, Coimbatore..."
               className="w-full bg-transparent px-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none font-medium"
             />
             {searchLocation && (

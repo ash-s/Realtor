@@ -67,7 +67,7 @@ export interface Property {
   droneVideoUrl?: string;
   verification: {
     isVerified: boolean;
-    approvalType: 'DTCP' | 'HMDA' | 'RERA' | 'Panchayat' | 'Clear Title';
+    approvalType: 'DTCP' | 'CMDA' | 'HMDA' | 'RERA' | 'Panchayat' | 'Clear Title';
     approvalNumber: string;
     surveyNumber: string;
     titleDeedVerified: boolean;

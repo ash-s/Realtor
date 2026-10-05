@@ -11,7 +11,7 @@ import {
   Phone,
   Mail,
   Calendar,
-  DollarSign,
+  IndianRupee,
   MapPin,
   CheckCircle2,
   Lock,
@@ -44,7 +44,7 @@ export default function ContactAdminModal() {
     if (currentUser) {
       setName(currentUser.name);
       setEmail(currentUser.email);
-      setPhone('+1 (555) 392-1084');
+      setPhone('+91 98401 22934');
     }
   }, [currentUser, isContactModalOpen]);
 
@@ -192,7 +192,7 @@ export default function ContactAdminModal() {
                       required
                       value={phone}
                       onChange={e => setPhone(e.target.value)}
-                      placeholder="+1 (555) 392-1084"
+                      placeholder="+91 98401 22934"
                       className="w-full bg-stone-50/80 border border-stone-200 rounded-xl pl-9 pr-3 py-2 text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition font-mono font-medium"
                     />
                   </div>
@@ -252,10 +252,10 @@ export default function ContactAdminModal() {
 
                 <div>
                   <label className="block text-stone-700 font-bold mb-1">
-                    Proposed Offer ($) (Optional)
+                    Proposed Offer (₹) (Optional)
                   </label>
                   <div className="relative">
-                    <DollarSign className="w-4 h-4 text-stone-400 absolute left-3 top-2.5 pointer-events-none" />
+                    <IndianRupee className="w-4 h-4 text-stone-400 absolute left-3 top-2.5 pointer-events-none" />
                     <input
                       type="number"
                       value={offerPrice}
