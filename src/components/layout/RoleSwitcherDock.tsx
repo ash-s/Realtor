@@ -12,12 +12,6 @@ export default function RoleSwitcherDock() {
   const { currentUser, login, setIsContactModalOpen, setContactProperty } = useApp();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  React.useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-      setIsExpanded(true);
-    }
-  }, []);
-
   // Don't show inside login page
   if (pathname === '/login') return null;
 
@@ -29,20 +23,26 @@ export default function RoleSwitcherDock() {
   };
 
   return (
-    <aside aria-label="Role Switcher Dock" className="hidden md:block fixed bottom-4 left-4 z-50 select-none">
-      <div className="bg-white/95 backdrop-blur-md border border-slate-300 shadow-2xl rounded-2xl p-2.5 max-w-sm transition-all text-xs">
+    <aside aria-label="Role Switcher Dock" className="hidden md:block fixed bottom-28 left-4 z-40 select-none">
+      <div className="bg-white/95 backdrop-blur-md border border-slate-300 shadow-xl rounded-2xl p-2 max-w-sm transition-all text-xs">
         
         {/* Header with Collapse Toggle */}
-        <div className="flex items-center justify-between gap-3 pb-1 border-b border-slate-100">
+        <div 
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`flex items-center justify-between gap-3 cursor-pointer ${isExpanded ? 'pb-1 border-b border-slate-100' : ''}`}
+        >
           <div className="flex items-center gap-1.5 font-bold text-slate-800">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <span className="text-[11px] uppercase tracking-wider text-slate-500">Live Role Testing Dock:</span>
-            <span className="px-2 py-0.5 rounded-md font-extrabold text-[11px] capitalize bg-slate-100 text-slate-800">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500">Test Persona:</span>
+            <span className="px-1.5 py-0.5 rounded-md font-extrabold text-[10px] capitalize bg-slate-100 text-slate-800">
               {currentRole}
             </span>
           </div>
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(!isExpanded);
+            }}
             className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
             title={isExpanded ? 'Minimize' : 'Expand'}
           >

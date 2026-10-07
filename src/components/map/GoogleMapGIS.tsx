@@ -29,13 +29,15 @@ interface GoogleMapGISProps {
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
   onOpenMasterplan?: () => void;
+  headerCenterContent?: React.ReactNode;
 }
 
 export default function GoogleMapGIS({
   showBottomDrawer = false,
   onToggleSidebar,
   isSidebarOpen = true,
-  onOpenMasterplan
+  onOpenMasterplan,
+  headerCenterContent
 }: GoogleMapGISProps) {
   const {
     properties,
@@ -575,8 +577,8 @@ export default function GoogleMapGIS({
   return (
     <div
       ref={mapWrapperRef}
-      className={`relative w-full h-full rounded-[28px] overflow-hidden bg-stone-900 border border-stone-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] select-none transition-all ${
-        isFullscreen ? 'h-screen w-screen rounded-none border-0' : ''
+      className={`relative w-full h-full overflow-hidden bg-stone-900 select-none transition-all ${
+        isFullscreen ? 'fixed inset-0 z-50 h-screen w-screen' : ''
       }`}
     >
       {/* Real Movable Leaflet Canvas */}
@@ -589,7 +591,7 @@ export default function GoogleMapGIS({
       <div className="absolute top-2 sm:top-3 left-2 sm:left-4 right-2 sm:right-4 z-20 flex items-center justify-between gap-1.5 sm:gap-2.5 pointer-events-none">
         
         {/* Left Side: Sidebar Toggle (if available) + Compact Search Pill */}
-        <div className="flex items-center gap-1.5 pointer-events-auto min-w-0">
+        <div className="flex items-center gap-1.5 pointer-events-auto min-w-0 shrink-0">
           {onToggleSidebar && (
             <button
               onClick={onToggleSidebar}
@@ -641,6 +643,13 @@ export default function GoogleMapGIS({
             </button>
           </form>
         </div>
+
+        {/* Center: Filters & View Switcher (Passed from parent) */}
+        {headerCenterContent && (
+          <div className="pointer-events-auto min-w-0 flex items-center overflow-x-auto scrollbar-none">
+            {headerCenterContent}
+          </div>
+        )}
 
         {/* Right Side: 16 Plots button (if layout) + Satellite / Streets Pill */}
         <div className="pointer-events-auto flex items-center gap-1 shrink-0">

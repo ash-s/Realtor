@@ -130,203 +130,213 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAFAF9] text-stone-900 font-sans">
+    <div className={`flex flex-col font-sans ${viewMode === 'full_map' ? 'h-screen w-screen overflow-hidden bg-stone-900 text-stone-900' : 'min-h-screen bg-[#FAFAF9] text-stone-900'}`}>
       <Navbar />
 
-      <main className="flex-1 max-w-[1520px] w-full mx-auto p-2 sm:p-4 lg:p-6 space-y-3.5 overflow-hidden">
-        
-        {/* Top Control Bar: Channel, SubType Filters & View Modes */}
-        <div className="bg-white p-3 sm:p-3.5 rounded-[24px] border border-stone-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-3 overflow-hidden">
+      {/* 
+        VIEW MODE 1: PURE FULL-SCREEN EDGE-TO-EDGE GIS MAP (NO BOXED LAYOUT)
+        The map canvas fills 100% width and 100% remaining viewport height.
+        Floating glassmorphic controls and bottom micro-cards overlay directly on the map.
+      */}
+      {viewMode === 'full_map' ? (
+        <main className="flex-1 w-full h-[calc(100dvh-4rem)] relative overflow-hidden bg-stone-900">
           
-          {/* Channel Label & Count */}
-          <div className="flex items-center justify-between gap-2 min-w-0 w-full md:w-auto">
-            <span className="text-xs font-black text-stone-900 uppercase tracking-wider truncate">
-              {activeChannel === 'land_plot' ? '🌱 Tamil Nadu Lands & Plots' : '🏢 Tamil Nadu Luxury Villas'}
-            </span>
-            <span className="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 sm:px-2.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 shrink-0">
-              <span className="sm:hidden">{filteredProperties.length} in TN</span>
-              <span className="hidden sm:inline">{filteredProperties.length} Properties in TN</span>
-            </span>
+          {/* The GoogleMapGIS / Masterplan Canvas fills 100% Edge-to-Edge */}
+          <div className="absolute inset-0 z-0">
+            {activeCanvasTab === 'satellite' ? (
+              <ErrorBoundary fallbackTitle="Satellite GIS Map">
+                <GoogleMapGIS
+                  showBottomDrawer={false}
+                  onOpenMasterplan={() => setActiveCanvasTab('masterplan')}
+                  onToggleSidebar={cardsPlacement === 'side' ? () => setIsSideDrawerOpen(!isSideDrawerOpen) : undefined}
+                  isSidebarOpen={isSideDrawerOpen}
+                  headerCenterContent={
+                    <div className="flex items-center gap-1 sm:gap-1.5 bg-white/95 backdrop-blur-xl p-0.5 sm:p-1 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-xs">
+                      {/* Subtype Filter Pills */}
+                      <button
+                        onClick={() => setSelectedSubType('all')}
+                        className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-bold text-[9.5px] sm:text-xs transition ${
+                          selectedSubType === 'all'
+                            ? 'bg-stone-900 text-white shadow-xs'
+                            : 'text-stone-600 hover:text-stone-900'
+                        }`}
+                      >
+                        All
+                      </button>
+
+                      {activeChannel === 'land_plot' ? (
+                        <>
+                          <button
+                            onClick={() => setSelectedSubType('residential_plot')}
+                            className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-bold text-[9.5px] sm:text-xs transition whitespace-nowrap ${
+                              selectedSubType === 'residential_plot'
+                                ? 'bg-stone-900 text-white shadow-xs'
+                                : 'text-stone-600 hover:text-stone-900'
+                            }`}
+                          >
+                            Plots
+                          </button>
+                          <button
+                            onClick={() => setSelectedSubType('farmhouse_land')}
+                            className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-bold text-[9.5px] sm:text-xs transition whitespace-nowrap ${
+                              selectedSubType === 'farmhouse_land'
+                                ? 'bg-stone-900 text-white shadow-xs'
+                                : 'text-stone-600 hover:text-stone-900'
+                            }`}
+                          >
+                            Farmhouse
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setSelectedSubType('luxury_villa')}
+                          className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-bold text-[9.5px] sm:text-xs transition whitespace-nowrap ${
+                            selectedSubType === 'luxury_villa'
+                              ? 'bg-stone-900 text-white shadow-xs'
+                              : 'text-stone-600 hover:text-stone-900'
+                          }`}
+                        >
+                          Villas
+                        </button>
+                      )}
+
+                      {/* Divider */}
+                      <div className="h-3 w-px bg-stone-200 mx-0.5" />
+
+                      {/* View Switcher: Split & Grid */}
+                      <button
+                        onClick={() => setViewMode('split')}
+                        className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-stone-600 hover:text-stone-900 font-semibold text-[9.5px] sm:text-xs flex items-center gap-1 transition"
+                        title="Switch to Split View"
+                      >
+                        <Columns className="w-3 h-3 text-blue-500" />
+                        <span className="hidden sm:inline">Split</span>
+                      </button>
+
+                      <button
+                        onClick={() => setViewMode('grid')}
+                        className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-stone-600 hover:text-stone-900 font-semibold text-[9.5px] sm:text-xs flex items-center gap-1 transition"
+                        title="Switch to Grid View"
+                      >
+                        <LayoutGrid className="w-3 h-3 text-amber-500" />
+                        <span className="hidden sm:inline">Grid</span>
+                      </button>
+                    </div>
+                  }
+                />
+              </ErrorBoundary>
+            ) : (
+              <ErrorBoundary fallbackTitle="Plotted Venture Masterplan">
+                <VentureLayoutExplorer onBackToMap={() => setActiveCanvasTab('satellite')} />
+              </ErrorBoundary>
+            )}
           </div>
 
-          {/* Subtype Filter Pills + View Switcher */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 w-full min-w-0 md:w-auto scrollbar-none pr-2">
-            
-            {/* Filter Pills */}
-            <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-full border border-stone-200/70 text-xs">
-              <button
-                onClick={() => setSelectedSubType('all')}
-                className={`px-3 py-1 rounded-full font-semibold transition ${
-                  selectedSubType === 'all'
-                    ? 'bg-stone-900 text-white shadow-xs'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                All
-              </button>
-
-              {activeChannel === 'land_plot' ? (
-                <>
-                  <button
-                    onClick={() => setSelectedSubType('residential_plot')}
-                    className={`px-3 py-1 rounded-full font-semibold transition whitespace-nowrap ${
-                      selectedSubType === 'residential_plot'
-                        ? 'bg-stone-900 text-white shadow-xs'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
-                  >
-                    Residential Plots
-                  </button>
-                  <button
-                    onClick={() => setSelectedSubType('farmhouse_land')}
-                    className={`px-3 py-1 rounded-full font-semibold transition whitespace-nowrap ${
-                      selectedSubType === 'farmhouse_land'
-                        ? 'bg-stone-900 text-white shadow-xs'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
-                  >
-                    Farmhouse Lands
-                  </button>
-                </>
-              ) : (
+          {/* 
+            OPTION A: FLOATING SIDE CARDS STACK
+            Visible when cardsPlacement === 'side'
+          */}
+          {cardsPlacement === 'side' && isSideDrawerOpen && (
+            <div className="absolute left-3 top-16 bottom-3 z-20 w-80 sm:w-96 flex flex-col bg-white/90 backdrop-blur-2xl rounded-2xl border border-stone-200/90 shadow-2xl p-3 pointer-events-auto overflow-hidden animate-in slide-in-from-left duration-300">
+              <div className="flex items-center justify-between pb-2 border-b border-stone-200/80 mb-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-stone-900">Tamil Nadu Properties</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    {filteredProperties.length}
+                  </span>
+                </div>
                 <button
-                  onClick={() => setSelectedSubType('luxury_villa')}
-                  className={`px-3 py-1 rounded-full font-semibold transition whitespace-nowrap ${
-                    selectedSubType === 'luxury_villa'
-                      ? 'bg-stone-900 text-white shadow-xs'
-                      : 'text-stone-600 hover:text-stone-900'
-                  }`}
+                  onClick={() => setIsSideDrawerOpen(false)}
+                  className="p-1 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100"
                 >
-                  Luxury Villas
-                </button>
-              )}
-            </div>
-
-            {/* View Mode Switcher: Full Map (Default) | Split | Grid */}
-            <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-full border border-stone-200/70 text-xs">
-              <button
-                onClick={() => setViewMode('full_map')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition ${
-                  viewMode === 'full_map'
-                    ? 'bg-stone-900 text-white shadow-xs'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-                title="Full Map Hero with Floating Property Cards"
-              >
-                <MapIcon className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Full Map</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('split')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition ${
-                  viewMode === 'split'
-                    ? 'bg-stone-900 text-white shadow-xs'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-                title="Side-by-side Feed + Map"
-              >
-                <Columns className="w-3.5 h-3.5 text-blue-400" />
-                <span className="hidden sm:inline">Split</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition ${
-                  viewMode === 'grid'
-                    ? 'bg-stone-900 text-white shadow-xs'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-                title="Property Grid Gallery"
-              >
-                <LayoutGrid className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Grid</span>
-              </button>
-            </div>
-
-            {/* If in Full Map Mode, toggle placement of small cards: Bottom vs Side */}
-            {viewMode === 'full_map' && (
-              <div className="hidden xl:flex items-center gap-1 bg-stone-100 p-1 rounded-full border border-stone-200/70 text-xs">
-                <button
-                  onClick={() => setCardsPlacement('bottom')}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full font-semibold transition ${
-                    cardsPlacement === 'bottom'
-                      ? 'bg-white text-stone-900 shadow-xs border border-stone-200'
-                      : 'text-stone-500 hover:text-stone-900'
-                  }`}
-                  title="Place small cards at bottom"
-                >
-                  <PanelBottom className="w-3 h-3 text-blue-600" />
-                  <span className="text-[11px]">Bottom</span>
-                </button>
-                <button
-                  onClick={() => setCardsPlacement('side')}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full font-semibold transition ${
-                    cardsPlacement === 'side'
-                      ? 'bg-white text-stone-900 shadow-xs border border-stone-200'
-                      : 'text-stone-500 hover:text-stone-900'
-                  }`}
-                  title="Place small cards on side"
-                >
-                  <PanelLeftOpen className="w-3 h-3 text-blue-600" />
-                  <span className="text-[11px]">Side</span>
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-            )}
 
-          </div>
-        </div>
-
-        {/* 
-          VIEW MODE 1: FULL MAP HERO VIEW (USER'S REQUESTED EXPERIENCE)
-          The map is the dominant full canvas with floating compact property cards at bottom or side.
-        */}
-        {viewMode === 'full_map' && (
-          <div className="relative w-full h-[620px] sm:h-[700px] lg:h-[760px] rounded-[28px] overflow-hidden border border-stone-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-stone-900">
-            
-            {/* The GoogleMapGIS / Masterplan Canvas fills 100% */}
-            <div className="absolute inset-0 z-0">
-              {activeCanvasTab === 'satellite' ? (
-                <ErrorBoundary fallbackTitle="Satellite GIS Map">
-                  <GoogleMapGIS
-                    showBottomDrawer={false}
-                    onOpenMasterplan={() => setActiveCanvasTab('masterplan')}
-                    onToggleSidebar={cardsPlacement === 'side' ? () => setIsSideDrawerOpen(!isSideDrawerOpen) : undefined}
-                    isSidebarOpen={isSideDrawerOpen}
+              <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin">
+                {filteredProperties.map(prop => (
+                  <CompactPropertyCard
+                    key={prop.id}
+                    property={prop}
+                    isSelected={selectedProperty?.id === prop.id}
+                    onSelect={() => {
+                      setSelectedProperty({ ...prop });
+                      setActiveCanvasTab('satellite');
+                    }}
+                    onOpenMasterplan={() => {
+                      setSelectedProperty({ ...prop });
+                      setActiveCanvasTab('masterplan');
+                    }}
+                    onOpenDetails={() => {
+                      setSelectedProperty({ ...prop });
+                      setIsDetailModalOpen(true);
+                    }}
+                    onOpenVisit={() => {
+                      setSelectedProperty({ ...prop });
+                      setIsDealModalOpen(true);
+                    }}
+                    isSideView={true}
                   />
-                </ErrorBoundary>
-              ) : (
-                <ErrorBoundary fallbackTitle="Plotted Venture Masterplan">
-                  <VentureLayoutExplorer onBackToMap={() => setActiveCanvasTab('satellite')} />
-                </ErrorBoundary>
-              )}
+                ))}
+              </div>
             </div>
+          )}
 
-            {/* 
-              OPTION A: FLOATING SIDE CARDS STACK
-              Visible when cardsPlacement === 'side'
-            */}
-            {cardsPlacement === 'side' && isSideDrawerOpen && (
-              <div className="absolute left-3 top-16 bottom-3 z-20 w-80 sm:w-96 flex flex-col bg-white/90 backdrop-blur-2xl rounded-2xl border border-stone-200/90 shadow-2xl p-3 pointer-events-auto overflow-hidden animate-in slide-in-from-left duration-300">
-                <div className="flex items-center justify-between pb-2 border-b border-stone-200/80 mb-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-black text-stone-900">Tamil Nadu Properties</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      {filteredProperties.length}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setIsSideDrawerOpen(false)}
-                    className="p-1 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+          {/* 
+            OPTION B: FLOATING BOTTOM SMALL CARDS TRAY / CAROUSEL (DEFAULT)
+            Positioned along the bottom with horizontal scrolling and touch swiping.
+            Touching any card immediately updates selectedProperty and flies the map to its surveyed boundary!
+          */}
+          {cardsPlacement === 'bottom' && (
+            <div className="absolute bottom-2 sm:bottom-3.5 left-2 sm:left-4 right-2 sm:right-4 z-20 pointer-events-none">
+              
+              {/* Carousel Top Hint & Controls */}
+              <div className="flex items-center justify-between mb-1 px-1 sm:px-2 pointer-events-auto">
+                <div className="bg-stone-900/85 backdrop-blur-md px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-white text-[10px] sm:text-[11px] font-bold shadow-md flex items-center gap-1.5">
+                  <Compass className="w-3 h-3 text-blue-400 shrink-0" />
+                  <span className="truncate max-w-[210px] xs:max-w-[270px] sm:max-w-none">
+                    {selectedProperty ? (
+                      <>Active: <b className="text-emerald-400">{selectedProperty.location.city.split('(')[0].trim()}</b> · <span className="font-mono text-stone-300">#{selectedProperty.verification.surveyNumber.split(' ')[0]}</span> ({formatCompactINR(selectedProperty.price)})</>
+                    ) : (
+                      <>Touch any card to frame surveyed boundary ({filteredProperties.length} in TN)</>
+                    )}
+                  </span>
                 </div>
 
-                <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin">
-                  {filteredProperties.map(prop => (
+                {/* Left / Right Carousel Scroll Buttons */}
+                <div className="hidden sm:flex items-center gap-1 bg-white/90 backdrop-blur-md p-0.5 rounded-full border border-stone-200/90 shadow-md">
+                  <button
+                    onClick={() => scrollCarousel('left')}
+                    className="p-1 rounded-full hover:bg-stone-100 text-stone-600 transition"
+                    title="Scroll Left"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => scrollCarousel('right')}
+                    className="p-1 rounded-full hover:bg-stone-100 text-stone-600 transition"
+                    title="Scroll Right"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Horizontal Scrollable Compact Cards Dock */}
+              <div
+                ref={bottomCarouselRef}
+                className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1.5 pt-0.5 px-0.5 pr-6 pointer-events-auto scrollbar-none snap-x snap-mandatory"
+                style={{ scrollBehavior: 'smooth' }}
+              >
+                {filteredProperties.map(prop => (
+                  <div
+                    key={prop.id}
+                    ref={el => {
+                      cardRefs.current[prop.id] = el;
+                    }}
+                    className="snap-center"
+                  >
                     <CompactPropertyCard
-                      key={prop.id}
                       property={prop}
                       isSelected={selectedProperty?.id === prop.id}
                       onSelect={() => {
@@ -345,97 +355,126 @@ export default function Home() {
                         setSelectedProperty({ ...prop });
                         setIsDealModalOpen(true);
                       }}
-                      isSideView={true}
+                      isSideView={false}
                     />
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            )}
 
-            {/* 
-              OPTION B: FLOATING BOTTOM SMALL CARDS TRAY / CAROUSEL (DEFAULT)
-              Positioned along the bottom with horizontal scrolling and touch swiping.
-              Touching any card immediately updates selectedProperty and flies the map to its surveyed boundary!
-            */}
-            {cardsPlacement === 'bottom' && (
-              <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-4 right-2 sm:right-4 z-20 pointer-events-none">
-                
-                {/* Carousel Top Hint & Controls */}
-                <div className="flex items-center justify-between mb-1 px-1 sm:px-2 pointer-events-auto">
-                  <div className="bg-stone-900/85 backdrop-blur-md px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-white text-[10px] sm:text-[11px] font-bold shadow-md flex items-center gap-1.5">
-                    <Compass className="w-3 h-3 text-blue-400 shrink-0" />
-                    <span className="truncate max-w-[210px] xs:max-w-[270px] sm:max-w-none">
-                      {selectedProperty ? (
-                        <>Active: <b className="text-emerald-400">{selectedProperty.location.city.split('(')[0].trim()}</b> · <span className="font-mono text-stone-300">#{selectedProperty.verification.surveyNumber.split(' ')[0]}</span> ({formatCompactINR(selectedProperty.price)})</>
-                      ) : (
-                        <>Touch any card to frame surveyed boundary ({filteredProperties.length} in TN)</>
-                      )}
-                    </span>
-                  </div>
+            </div>
+          )}
 
-                  {/* Left / Right Carousel Scroll Buttons */}
-                  <div className="hidden sm:flex items-center gap-1 bg-white/90 backdrop-blur-md p-0.5 rounded-full border border-stone-200/90 shadow-md">
-                    <button
-                      onClick={() => scrollCarousel('left')}
-                      className="p-1 rounded-full hover:bg-stone-100 text-stone-600 transition"
-                      title="Scroll Left"
-                    >
-                      <ChevronLeft className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => scrollCarousel('right')}
-                      className="p-1 rounded-full hover:bg-stone-100 text-stone-600 transition"
-                      title="Scroll Right"
-                    >
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
+        </main>
+      ) : (
+        <main className="flex-1 max-w-[1520px] w-full mx-auto p-2 sm:p-4 lg:p-6 space-y-3.5 overflow-hidden flex flex-col">
+          
+          {/* Top Control Bar for Split & Grid Modes */}
+          <div className="bg-white p-3 sm:p-3.5 rounded-[24px] border border-stone-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-3 overflow-hidden">
+            
+            {/* Channel Label & Count */}
+            <div className="flex items-center justify-between gap-2 min-w-0 w-full md:w-auto">
+              <span className="text-xs font-black text-stone-900 uppercase tracking-wider truncate">
+                {activeChannel === 'land_plot' ? '🌱 Tamil Nadu Lands & Plots' : '🏢 Tamil Nadu Luxury Villas'}
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 sm:px-2.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 shrink-0">
+                <span className="sm:hidden">{filteredProperties.length} in TN</span>
+                <span className="hidden sm:inline">{filteredProperties.length} Properties in TN</span>
+              </span>
+            </div>
 
-                {/* Horizontal Scrollable Compact Cards Dock */}
-                <div
-                  ref={bottomCarouselRef}
-                  className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1.5 pt-0.5 px-0.5 pr-6 pointer-events-auto scrollbar-none snap-x snap-mandatory"
-                  style={{ scrollBehavior: 'smooth' }}
+            {/* Subtype Filter Pills + View Switcher */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 w-full min-w-0 md:w-auto scrollbar-none pr-2">
+              
+              {/* Filter Pills */}
+              <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-full border border-stone-200/70 text-xs">
+                <button
+                  onClick={() => setSelectedSubType('all')}
+                  className={`px-3 py-1 rounded-full font-semibold transition ${
+                    selectedSubType === 'all'
+                      ? 'bg-stone-900 text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
                 >
-                  {filteredProperties.map(prop => (
-                    <div
-                      key={prop.id}
-                      ref={el => {
-                        cardRefs.current[prop.id] = el;
-                      }}
-                      className="snap-center"
+                  All
+                </button>
+
+                {activeChannel === 'land_plot' ? (
+                  <>
+                    <button
+                      onClick={() => setSelectedSubType('residential_plot')}
+                      className={`px-3 py-1 rounded-full font-semibold transition whitespace-nowrap ${
+                        selectedSubType === 'residential_plot'
+                          ? 'bg-stone-900 text-white shadow-xs'
+                          : 'text-stone-600 hover:text-stone-900'
+                      }`}
                     >
-                      <CompactPropertyCard
-                        property={prop}
-                        isSelected={selectedProperty?.id === prop.id}
-                        onSelect={() => {
-                          setSelectedProperty({ ...prop });
-                          setActiveCanvasTab('satellite');
-                        }}
-                        onOpenMasterplan={() => {
-                          setSelectedProperty({ ...prop });
-                          setActiveCanvasTab('masterplan');
-                        }}
-                        onOpenDetails={() => {
-                          setSelectedProperty({ ...prop });
-                          setIsDetailModalOpen(true);
-                        }}
-                        onOpenVisit={() => {
-                          setSelectedProperty({ ...prop });
-                          setIsDealModalOpen(true);
-                        }}
-                        isSideView={false}
-                      />
-                    </div>
-                  ))}
-                </div>
-
+                      Residential Plots
+                    </button>
+                    <button
+                      onClick={() => setSelectedSubType('farmhouse_land')}
+                      className={`px-3 py-1 rounded-full font-semibold transition whitespace-nowrap ${
+                        selectedSubType === 'farmhouse_land'
+                          ? 'bg-stone-900 text-white shadow-xs'
+                          : 'text-stone-600 hover:text-stone-900'
+                      }`}
+                    >
+                      Farmhouse Lands
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setSelectedSubType('luxury_villa')}
+                    className={`px-3 py-1 rounded-full font-semibold transition whitespace-nowrap ${
+                      selectedSubType === 'luxury_villa'
+                        ? 'bg-stone-900 text-white shadow-xs'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    Luxury Villas
+                  </button>
+                )}
               </div>
-            )}
 
+              {/* View Mode Switcher */}
+              <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-full border border-stone-200/70 text-xs">
+                <button
+                  onClick={() => setViewMode('full_map')}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition text-stone-600 hover:text-stone-900"
+                  title="Full Map Hero with Floating Property Cards"
+                >
+                  <MapIcon className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">Full Map</span>
+                </button>
+
+                <button
+                  onClick={() => setViewMode('split')}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition ${
+                    viewMode === 'split'
+                      ? 'bg-stone-900 text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                  title="Side-by-side Feed + Map"
+                >
+                  <Columns className="w-3.5 h-3.5 text-blue-400" />
+                  <span className="hidden sm:inline">Split</span>
+                </button>
+
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition ${
+                    viewMode === 'grid'
+                      ? 'bg-stone-900 text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                  title="Property Grid Gallery"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Grid</span>
+                </button>
+              </div>
+
+            </div>
           </div>
-        )}
 
         {/* 
           VIEW MODE 2: SPLIT VIEW (Standard Side Feed + Full Map)
@@ -558,27 +597,30 @@ export default function Home() {
         )}
 
       </main>
+      )}
 
       <PropertyDetailModal />
       <CreateDealModal />
       <AddPropertyModal />
       <KycModal />
 
-      {/* Footer with Tamil Nadu Real Estate & Escrow Badges */}
-      <footer className="border-t border-stone-200 bg-white py-6 text-xs text-stone-500 mt-10">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-            <span className="font-semibold text-stone-900">PlotTerra GIS Real Estate</span>
-            <span>· Tamil Nadu Verified Lands & Villas</span>
+      {/* Footer with Tamil Nadu Real Estate & Escrow Badges (only in Split & Grid views) */}
+      {viewMode !== 'full_map' && (
+        <footer className="border-t border-stone-200 bg-white py-6 text-xs text-stone-500 mt-10">
+          <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+              <span className="font-semibold text-stone-900">PlotTerra GIS Real Estate</span>
+              <span>· Tamil Nadu Verified Lands & Villas</span>
+            </div>
+            <div className="flex items-center gap-4 text-stone-500 text-[11px]">
+              <span>DTCP & CMDA Sanctioned</span>
+              <span>TNRERA Registered</span>
+              <span>All Prices in INR (₹)</span>
+            </div>
           </div>
-          <div className="flex items-center gap-4 text-stone-500 text-[11px]">
-            <span>DTCP & CMDA Sanctioned</span>
-            <span>TNRERA Registered</span>
-            <span>All Prices in INR (₹)</span>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
 
     </div>
   );
