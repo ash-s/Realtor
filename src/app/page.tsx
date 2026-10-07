@@ -123,6 +123,20 @@ export default function Home() {
     }
   }, [selectedProperty?.id]);
 
+  // Enable mouse wheel horizontal scrolling over the desktop carousel
+  useEffect(() => {
+    const el = bottomCarouselRef.current;
+    if (!el) return;
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        el.scrollBy({ left: e.deltaY * 1.5, behavior: 'smooth' });
+      }
+    };
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, []);
+
   const scrollCarousel = (direction: 'left' | 'right') => {
     if (!bottomCarouselRef.current) return;
     const scrollAmount = 340;
@@ -464,38 +478,6 @@ export default function Home() {
 
               {/* DESKTOP VIEW: Multi-Card Horizontal Scrollable Dock (>= 768px) */}
               <div className="hidden sm:block">
-                {/* Carousel Top Hint & Controls */}
-                <div className="flex items-center justify-between mb-1 px-1 sm:px-2 pointer-events-auto">
-                  <div className="bg-stone-900/85 backdrop-blur-md px-3 py-1 rounded-full text-white text-[11px] font-bold shadow-md flex items-center gap-1.5">
-                    <Compass className="w-3 h-3 text-blue-400 shrink-0" />
-                    <span>
-                      {selectedProperty ? (
-                        <>Active: <b className="text-emerald-400">{selectedProperty.location.city.split('(')[0].trim()}</b> · <span className="font-mono text-stone-300">#{selectedProperty.verification.surveyNumber.split(' ')[0]}</span> ({formatCompactINR(selectedProperty.price)})</>
-                      ) : (
-                        <>Touch any card to frame surveyed boundary ({filteredProperties.length} in TN)</>
-                      )}
-                    </span>
-                  </div>
-
-                  {/* Left / Right Carousel Scroll Buttons */}
-                  <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md p-0.5 rounded-full border border-stone-200/90 shadow-md">
-                    <button
-                      onClick={() => scrollCarousel('left')}
-                      className="p-1 rounded-full hover:bg-stone-100 text-stone-600 transition"
-                      title="Scroll Left"
-                    >
-                      <ChevronLeft className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => scrollCarousel('right')}
-                      className="p-1 rounded-full hover:bg-stone-100 text-stone-600 transition"
-                      title="Scroll Right"
-                    >
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-
                 {/* Horizontal Scrollable Compact Cards Dock */}
                 <div
                   ref={bottomCarouselRef}
