@@ -17,7 +17,8 @@ import {
   SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
-  Layers
+  Layers,
+  View
 } from 'lucide-react';
 import { Property } from '@/types';
 import { formatCurrency, formatNumber, formatCompactINR } from '@/lib/formatters';
@@ -44,7 +45,8 @@ export default function GoogleMapGIS({
     selectedProperty,
     setSelectedProperty,
     setIsDetailModalOpen,
-    setIsDealModalOpen
+    setIsDealModalOpen,
+    setIsStreetViewOpen
   } = useApp();
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -587,10 +589,85 @@ export default function GoogleMapGIS({
         className={`w-full h-full absolute inset-0 z-0 ${isDrawingMode ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}
       />
 
-      {/* TOP FLOATING ISLAND BAR */}
-      <div className="absolute top-2 sm:top-3 left-2 sm:left-4 right-2 sm:right-4 z-20 flex items-center justify-between gap-1.5 sm:gap-2.5 pointer-events-none">
+      {/* MOBILE TOP FLOATING HEADER (Row 1: Search & Controls, Row 2: Category Filter Chips) */}
+      <div className="flex sm:hidden flex-col gap-1.5 absolute top-2 left-2 right-2 z-20 pointer-events-none">
         
-        {/* Left Side: Sidebar Toggle (if available) + Compact Search Pill */}
+        {/* Row 1: Search Form + 16 Plots + Satellite/Map + 360° Street View */}
+        <div className="flex items-center justify-between gap-1.5 w-full pointer-events-auto">
+          {/* Mobile Search Input */}
+          <form
+            onSubmit={handleLocationSearch}
+            className="flex items-center bg-white/95 backdrop-blur-xl rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] px-2.5 py-1 flex-1 min-w-0"
+          >
+            <Search className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+            <input
+              type="text"
+              value={searchLocation}
+              onChange={e => setSearchLocation(e.target.value)}
+              placeholder="Search Tamil Nadu..."
+              className="w-full bg-transparent px-1.5 text-xs text-stone-900 placeholder-stone-400 focus:outline-none font-medium"
+            />
+            {searchLocation && (
+              <button
+                type="button"
+                onClick={() => setSearchLocation('')}
+                className="p-0.5 rounded-full text-stone-400 hover:text-stone-700 mr-1"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={isSearching}
+              className="px-2 py-0.5 rounded-full bg-stone-900 text-white font-semibold text-[10px] transition hover:bg-stone-800 shrink-0"
+            >
+              {isSearching ? '...' : 'Go'}
+            </button>
+          </form>
+
+          {/* 16 Plots Button on Mobile (if venture layout) */}
+          {selectedProperty?.isVentureLayout && onOpenMasterplan && (
+            <button
+              onClick={onOpenMasterplan}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold shadow-xs transition shrink-0"
+            >
+              <Layers className="w-3 h-3 text-emerald-200" />
+              <span>16 Plots</span>
+            </button>
+          )}
+
+          {/* Quick Basemap Toggle on Mobile */}
+          <button
+            onClick={() => changeMapType(mapType === 'roadmap' ? 'hybrid' : 'roadmap')}
+            className="flex items-center gap-1 bg-white/95 backdrop-blur-xl px-2.5 py-1.5 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-[10px] font-bold text-stone-800 shrink-0"
+            title="Toggle Satellite / Roadmap"
+          >
+            <span>{mapType === 'roadmap' ? '🗺️ Map' : '🛰️ Sat'}</span>
+          </button>
+
+          {/* 360° Street View Button on Mobile */}
+          <button
+            onClick={() => setIsStreetViewOpen(true)}
+            className="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1.5 rounded-full shadow-[0_4px_16px_rgba(37,99,235,0.3)] text-[10px] font-extrabold shrink-0 active:scale-95 transition"
+            title="Open 360° Street View Panorama"
+          >
+            <View className="w-3 h-3" />
+            <span>360°</span>
+          </button>
+        </div>
+
+        {/* Row 2: Filter Pills Chips (Full width smooth scroll on mobile) */}
+        {headerCenterContent && (
+          <div className="pointer-events-auto w-full flex items-center overflow-x-auto scrollbar-none py-0.5">
+            {headerCenterContent}
+          </div>
+        )}
+      </div>
+
+      {/* DESKTOP FLOATING ISLAND BAR (Single Centered Clean Line) */}
+      <div className="hidden sm:flex absolute top-3 left-4 right-4 z-20 items-center justify-between gap-2.5 pointer-events-none">
+        
+        {/* Left Side: Sidebar Toggle (if available) + Desktop Search Pill */}
         <div className="flex items-center gap-1.5 pointer-events-auto min-w-0 shrink-0">
           {onToggleSidebar && (
             <button
@@ -612,117 +689,130 @@ export default function GoogleMapGIS({
             </button>
           )}
 
-          {/* Search Input Floating Pill (Mobile-safe width) */}
+          {/* Desktop Search Input Floating Pill */}
           <form
             onSubmit={handleLocationSearch}
-            className="flex items-center bg-white/95 backdrop-blur-xl rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] px-2 py-0.5 sm:px-2.5 sm:py-1 w-24 xs:w-32 sm:w-56 transition-all focus-within:w-36 sm:focus-within:w-68 shrink-0"
+            className="flex items-center bg-white/95 backdrop-blur-xl rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] px-3 py-1.5 w-60 transition-all focus-within:w-72 shrink-0"
           >
-            <Search className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-stone-400 shrink-0" />
+            <Search className="w-3.5 h-3.5 text-stone-400 shrink-0" />
             <input
               type="text"
               value={searchLocation}
               onChange={e => setSearchLocation(e.target.value)}
-              placeholder="Search TN..."
-              className="w-full bg-transparent px-1 sm:px-1.5 text-[10px] sm:text-[11px] text-stone-900 placeholder-stone-400 focus:outline-none font-medium"
+              placeholder="Search Tamil Nadu (Chengalpattu, Ooty...)"
+              className="w-full bg-transparent px-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none font-medium"
             />
             {searchLocation && (
               <button
                 type="button"
                 onClick={() => setSearchLocation('')}
-                className="p-0.5 rounded-full text-stone-400 hover:text-stone-700 mr-0.5"
+                className="p-0.5 rounded-full text-stone-400 hover:text-stone-700 mr-1"
               >
-                <X className="w-2.5 h-2.5" />
+                <X className="w-3 h-3" />
               </button>
             )}
             <button
               type="submit"
               disabled={isSearching}
-              className="px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-full bg-stone-900 text-white font-semibold text-[9px] sm:text-[11px] transition hover:bg-stone-800 shrink-0"
+              className="px-2.5 py-0.5 rounded-full bg-stone-900 text-white font-semibold text-xs transition hover:bg-stone-800 shrink-0"
             >
               {isSearching ? '...' : 'Go'}
             </button>
           </form>
         </div>
 
-        {/* Center: Filters & View Switcher (Passed from parent) */}
+        {/* Center: Filters & View Switcher (Desktop) */}
         {headerCenterContent && (
           <div className="pointer-events-auto min-w-0 flex items-center overflow-x-auto scrollbar-none">
             {headerCenterContent}
           </div>
         )}
 
-        {/* Right Side: 16 Plots button (if layout) + Satellite / Streets Pill */}
-        <div className="pointer-events-auto flex items-center gap-1 shrink-0">
+        {/* Right Side: 16 Plots button + Basemap Switcher + 360° Street View */}
+        <div className="pointer-events-auto flex items-center gap-1.5 shrink-0">
           {selectedProperty?.isVentureLayout && onOpenMasterplan && (
             <button
               onClick={onOpenMasterplan}
-              className="flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[9.5px] sm:text-[11px] font-bold shadow-xs transition"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition"
               title="Inspect 16 Layout Plots"
             >
-              <Layers className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-200" />
+              <Layers className="w-3.5 h-3.5 text-emerald-200" />
               <span>16 Plots</span>
             </button>
           )}
 
-          {/* Mobile Single Layer Toggle Button */}
-          <button
-            onClick={() => changeMapType(mapType === 'roadmap' ? 'hybrid' : 'roadmap')}
-            className="flex sm:hidden items-center gap-1 bg-white/95 backdrop-blur-xl px-2 py-0.5 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-[9.5px] font-bold text-stone-800"
-            title="Toggle Satellite / Streets"
-          >
-            <span>{mapType === 'roadmap' ? '🗺️ Map' : '🛰️ Sat'}</span>
-          </button>
-
-          {/* Desktop Dual Switcher Pill */}
-          <div className="hidden sm:flex items-center gap-0.5 bg-white/95 backdrop-blur-xl p-0.5 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-xs font-semibold text-stone-700">
+          {/* Desktop Basemap Switcher Pill */}
+          <div className="flex items-center gap-0.5 bg-white/95 backdrop-blur-xl p-0.5 rounded-full border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-xs font-semibold text-stone-700">
             <button
               onClick={() => changeMapType('hybrid')}
-              className={`px-2.5 py-1 rounded-full text-[11px] transition ${
+              className={`px-3 py-1 rounded-full text-xs transition ${
                 mapType === 'hybrid' ? 'bg-stone-900 text-white shadow-xs' : 'hover:bg-stone-100 text-stone-600'
               }`}
+              title="High-Resolution Satellite GIS Imagery"
             >
               Satellite
             </button>
             <button
               onClick={() => changeMapType('roadmap')}
-              className={`px-2.5 py-1 rounded-full text-[11px] transition ${
+              className={`px-3 py-1 rounded-full text-xs transition ${
                 mapType === 'roadmap' ? 'bg-stone-900 text-white shadow-xs' : 'hover:bg-stone-100 text-stone-600'
               }`}
+              title="2D Vector Roadmap & Terrain"
             >
-              Streets
+              Roadmap
             </button>
           </div>
+
+          {/* Desktop 360° Street View Button */}
+          <button
+            onClick={() => setIsStreetViewOpen(true)}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-full shadow-[0_4px_16px_rgba(37,99,235,0.25)] text-xs font-bold transition"
+            title="Open 360° Street View Panorama"
+          >
+            <View className="w-3.5 h-3.5" />
+            <span>360° Street View</span>
+          </button>
         </div>
 
       </div>
 
       {/* RIGHT FLOATING TOOLSTRIP */}
-      <div className="absolute right-2 sm:right-4 top-13 sm:top-15 z-20 flex flex-col gap-1 pointer-events-auto select-none">
+      <div className="absolute right-2 sm:right-4 top-24 sm:top-18 z-20 flex flex-col gap-1.5 pointer-events-auto select-none">
         
-        <div className="flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] p-0.5 sm:p-1 divide-y divide-stone-100 text-stone-700">
+        {/* 360° Street View Tool Button with Ripple/Ping */}
+        <button
+          onClick={() => setIsStreetViewOpen(true)}
+          className="p-2 sm:p-2.5 rounded-2xl bg-white/95 hover:bg-blue-50 text-blue-600 border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition flex items-center justify-center relative group"
+          title="Open 360° Street View & Road Access"
+        >
+          <View className="w-4 h-4 text-blue-600" />
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping" />
+        </button>
+
+        <div className="flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] p-1 divide-y divide-stone-100 text-stone-700">
           <button
             onClick={() => mapInstanceRef.current?.zoomIn()}
-            className="p-1.5 sm:p-2 rounded-xl hover:bg-stone-100 transition"
+            className="p-2 rounded-xl hover:bg-stone-100 transition"
             title="Zoom In"
           >
-            <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-700" />
+            <ZoomIn className="w-4 h-4 text-stone-700" />
           </button>
           <button
             onClick={() => mapInstanceRef.current?.zoomOut()}
-            className="p-1.5 sm:p-2 rounded-xl hover:bg-stone-100 transition"
+            className="p-2 rounded-xl hover:bg-stone-100 transition"
             title="Zoom Out"
           >
-            <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-700" />
+            <ZoomOut className="w-4 h-4 text-stone-700" />
           </button>
         </div>
 
-        <div className="flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] p-0.5 sm:p-1 gap-0.5 text-stone-700">
+        <div className="flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl border border-stone-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08)] p-1 gap-0.5 text-stone-700">
           <button
             onClick={handleLocateMe}
-            className="p-1.5 sm:p-2 rounded-xl hover:bg-stone-100 text-stone-700 transition"
+            className="p-2 rounded-xl hover:bg-stone-100 text-stone-700 transition"
             title="My Location"
           >
-            <Navigation className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <Navigation className="w-4 h-4" />
           </button>
 
           <button
@@ -730,22 +820,22 @@ export default function GoogleMapGIS({
               setIsDrawingMode(!isDrawingMode);
               if (isDrawingMode) setDrawnPoints([]);
             }}
-            className={`p-1.5 sm:p-2 rounded-xl transition ${
+            className={`p-2 rounded-xl transition ${
               isDrawingMode
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'hover:bg-stone-100 text-stone-700'
             }`}
             title="Measure / Draw Boundary"
           >
-            <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <Pencil className="w-4 h-4" />
           </button>
 
           <button
             onClick={toggleFullscreen}
-            className="p-1.5 sm:p-2 rounded-xl hover:bg-stone-100 text-stone-700 transition"
+            className="p-2 rounded-xl hover:bg-stone-100 text-stone-700 transition"
             title="Fullscreen"
           >
-            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
         </div>
 

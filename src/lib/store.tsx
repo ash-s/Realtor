@@ -47,6 +47,8 @@ interface AppContextType {
   setIsDealModalOpen: (open: boolean) => void;
   isKycModalOpen: boolean;
   setIsKycModalOpen: (open: boolean) => void;
+  isStreetViewOpen: boolean;
+  setIsStreetViewOpen: (open: boolean) => void;
   isContactModalOpen: boolean;
   setIsContactModalOpen: (open: boolean) => void;
   contactProperty: Property | null;
@@ -121,6 +123,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isAddPropertyModalOpen, setIsAddPropertyModalOpen] = useState(false);
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
   const [isKycModalOpen, setIsKycModalOpen] = useState(false);
+  const [isStreetViewOpen, setIsStreetViewOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactProperty, setContactProperty] = useState<Property | null>(null);
 
@@ -471,6 +474,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setIsDealModalOpen,
         isKycModalOpen,
         setIsKycModalOpen,
+        isStreetViewOpen,
+        setIsStreetViewOpen,
         isContactModalOpen,
         setIsContactModalOpen,
         contactProperty,

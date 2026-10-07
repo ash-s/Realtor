@@ -8,6 +8,7 @@ import VentureLayoutExplorer from '@/components/map/VentureLayoutExplorer';
 import PropertyCard from '@/components/property/PropertyCard';
 import CompactPropertyCard from '@/components/property/CompactPropertyCard';
 import PropertyDetailModal from '@/components/property/PropertyDetailModal';
+import StreetViewModal from '@/components/map/StreetViewModal';
 import CreateDealModal from '@/components/deals/CreateDealModal';
 import AddPropertyModal from '@/components/seller/AddPropertyModal';
 import KycModal from '@/components/kyc/KycModal';
@@ -28,7 +29,8 @@ import {
   CheckCircle2,
   PanelLeftClose,
   PanelLeftOpen,
-  PanelBottom
+  PanelBottom,
+  View
 } from 'lucide-react';
 import { formatCurrency, formatNumber, formatIndianNumber, formatCompactINR } from '@/lib/formatters';
 
@@ -53,7 +55,8 @@ export default function Home() {
     selectedSubType,
     setSelectedSubType,
     setIsDetailModalOpen,
-    setIsDealModalOpen
+    setIsDealModalOpen,
+    setIsStreetViewOpen
   } = useApp();
 
   // View state: 'full_map' (hero map with bottom/side cards), 'split' (side feed + map), 'grid' (traditional grid)
@@ -127,6 +130,37 @@ export default function Home() {
       left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: 'smooth'
     });
+  };
+
+  // Active mobile property index for clean, zero-truncation mobile card navigation
+  const activeMobileProperty = selectedProperty || filteredProperties[0];
+  const currentMobileIndex = Math.max(0, filteredProperties.findIndex(p => p.id === activeMobileProperty?.id));
+
+  const goToPrevProperty = () => {
+    if (filteredProperties.length === 0) return;
+    const prevIdx = (currentMobileIndex - 1 + filteredProperties.length) % filteredProperties.length;
+    setSelectedProperty({ ...filteredProperties[prevIdx] });
+    setActiveCanvasTab('satellite');
+  };
+
+  const goToNextProperty = () => {
+    if (filteredProperties.length === 0) return;
+    const nextIdx = (currentMobileIndex + 1) % filteredProperties.length;
+    setSelectedProperty({ ...filteredProperties[nextIdx] });
+    setActiveCanvasTab('satellite');
+  };
+
+  const touchStartXRef = useRef<number>(0);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
+    if (deltaX > 45) {
+      goToPrevProperty();
+    } else if (deltaX < -45) {
+      goToNextProperty();
+    }
   };
 
   return (
@@ -290,75 +324,220 @@ export default function Home() {
           {cardsPlacement === 'bottom' && (
             <div className="absolute bottom-2 sm:bottom-3.5 left-2 sm:left-4 right-2 sm:right-4 z-20 pointer-events-none">
               
-              {/* Carousel Top Hint & Controls */}
-              <div className="flex items-center justify-between mb-1 px-1 sm:px-2 pointer-events-auto">
-                <div className="bg-stone-900/85 backdrop-blur-md px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-white text-[10px] sm:text-[11px] font-bold shadow-md flex items-center gap-1.5">
-                  <Compass className="w-3 h-3 text-blue-400 shrink-0" />
-                  <span className="truncate max-w-[210px] xs:max-w-[270px] sm:max-w-none">
-                    {selectedProperty ? (
-                      <>Active: <b className="text-emerald-400">{selectedProperty.location.city.split('(')[0].trim()}</b> · <span className="font-mono text-stone-300">#{selectedProperty.verification.surveyNumber.split(' ')[0]}</span> ({formatCompactINR(selectedProperty.price)})</>
-                    ) : (
-                      <>Touch any card to frame surveyed boundary ({filteredProperties.length} in TN)</>
-                    )}
-                  </span>
-                </div>
-
-                {/* Left / Right Carousel Scroll Buttons */}
-                <div className="hidden sm:flex items-center gap-1 bg-white/90 backdrop-blur-md p-0.5 rounded-full border border-stone-200/90 shadow-md">
-                  <button
-                    onClick={() => scrollCarousel('left')}
-                    className="p-1 rounded-full hover:bg-stone-100 text-stone-600 transition"
-                    title="Scroll Left"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => scrollCarousel('right')}
-                    className="p-1 rounded-full hover:bg-stone-100 text-stone-600 transition"
-                    title="Scroll Right"
-                  >
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Horizontal Scrollable Compact Cards Dock */}
-              <div
-                ref={bottomCarouselRef}
-                className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1.5 pt-0.5 px-0.5 pr-6 pointer-events-auto scrollbar-none snap-x snap-mandatory"
-                style={{ scrollBehavior: 'smooth' }}
-              >
-                {filteredProperties.map(prop => (
+              {/* MOBILE VIEW: Dedicated Full-Width Native App Bottom Card (< 768px) */}
+              <div className="block sm:hidden pointer-events-auto">
+                {activeMobileProperty && (
                   <div
-                    key={prop.id}
-                    ref={el => {
-                      cardRefs.current[prop.id] = el;
-                    }}
-                    className="snap-center"
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                    className="bg-white/95 backdrop-blur-2xl rounded-2xl border border-stone-200/90 shadow-[0_12px_36px_rgba(0,0,0,0.2)] p-3 text-left transition-all"
                   >
-                    <CompactPropertyCard
-                      property={prop}
-                      isSelected={selectedProperty?.id === prop.id}
-                      onSelect={() => {
-                        setSelectedProperty({ ...prop });
-                        setActiveCanvasTab('satellite');
-                      }}
-                      onOpenMasterplan={() => {
-                        setSelectedProperty({ ...prop });
-                        setActiveCanvasTab('masterplan');
-                      }}
-                      onOpenDetails={() => {
-                        setSelectedProperty({ ...prop });
+                    {/* Top Row: Prev / Counter / Next + Approval Badge */}
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-stone-100 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={goToPrevProperty}
+                          className="p-1 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 active:scale-95 transition"
+                          title="Previous Property"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="text-[11px] font-black text-stone-800 font-mono">
+                          {currentMobileIndex + 1} / {filteredProperties.length}
+                        </span>
+                        <button
+                          onClick={goToNextProperty}
+                          className="p-1 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 active:scale-95 transition"
+                          title="Next Property"
+                        >
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="text-[9.5px] text-stone-400 pl-1 font-medium">Swipe card ↔</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          {activeMobileProperty.verification.approvalType}
+                        </span>
+                        <span className="text-[10px] text-stone-500 font-mono">
+                          #{activeMobileProperty.verification.surveyNumber.split(' ')[0]}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Middle Row: Large Clear Thumbnail + Title + Specs + Price */}
+                    <div 
+                      onClick={() => {
+                        setSelectedProperty({ ...activeMobileProperty });
                         setIsDetailModalOpen(true);
                       }}
-                      onOpenVisit={() => {
-                        setSelectedProperty({ ...prop });
-                        setIsDealModalOpen(true);
-                      }}
-                      isSideView={false}
-                    />
+                      className="flex items-center gap-3 cursor-pointer"
+                    >
+                      <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-stone-200 shadow-xs">
+                        <img
+                          src={activeMobileProperty.images[0]}
+                          alt={activeMobileProperty.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-1 left-1 px-1 py-0.2 rounded bg-blue-600 text-white text-[7px] font-black uppercase tracking-wider flex items-center gap-0.5">
+                          <span className="w-1 h-1 rounded-full bg-white animate-ping" />
+                          <span>GPS</span>
+                        </div>
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs font-black text-stone-900 truncate leading-snug">
+                          {activeMobileProperty.title}
+                        </h4>
+                        <p className="text-[11px] text-stone-500 font-medium truncate mt-0.5 flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-stone-400 shrink-0" />
+                          <span>{activeMobileProperty.location.city.split('(')[0].trim()}</span>
+                          <span>·</span>
+                          <span suppressHydrationWarning>{formatNumber(activeMobileProperty.totalSqft)} sqft</span>
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-sm font-black text-stone-900" suppressHydrationWarning>
+                            {formatCompactINR(activeMobileProperty.price)}
+                          </span>
+                          <span className="text-[10px] text-stone-400 font-mono">
+                            (₹{Math.round(activeMobileProperty.pricePerSqft).toLocaleString('en-IN')}/sqft)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Buttons Row */}
+                    <div className="flex items-center gap-1.5 pt-2.5 mt-2 border-t border-stone-100">
+                      {/* 360° Street View Button */}
+                      <button
+                        onClick={() => {
+                          setSelectedProperty({ ...activeMobileProperty });
+                          setIsStreetViewOpen(true);
+                        }}
+                        className="flex-1 py-1.5 px-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] flex items-center justify-center gap-1 transition shadow-xs active:scale-95"
+                      >
+                        <View className="w-3.5 h-3.5" />
+                        <span>360° Street</span>
+                      </button>
+
+                      {/* Frame Boundaries Button */}
+                      <button
+                        onClick={() => {
+                          setSelectedProperty({ ...activeMobileProperty });
+                          setActiveCanvasTab('satellite');
+                        }}
+                        className="py-1.5 px-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-semibold text-[11px] flex items-center justify-center gap-1 transition"
+                        title="Frame Survey Boundary with Pegs A-B-C-D"
+                      >
+                        <Compass className="w-3.5 h-3.5 text-blue-500" />
+                        <span>Boundaries</span>
+                      </button>
+
+                      {/* Full Specs Button */}
+                      <button
+                        onClick={() => {
+                          setSelectedProperty({ ...activeMobileProperty });
+                          setIsDetailModalOpen(true);
+                        }}
+                        className="py-1.5 px-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-semibold text-[11px] transition"
+                        title="Full Specifications"
+                      >
+                        Specs
+                      </button>
+
+                      {/* Book Visit Button */}
+                      <button
+                        onClick={() => {
+                          setSelectedProperty({ ...activeMobileProperty });
+                          setIsDealModalOpen(true);
+                        }}
+                        className="py-1.5 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-[11px] flex items-center justify-center gap-1 transition active:scale-95"
+                      >
+                        <span>Visit</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
+
                   </div>
-                ))}
+                )}
+              </div>
+
+              {/* DESKTOP VIEW: Multi-Card Horizontal Scrollable Dock (>= 768px) */}
+              <div className="hidden sm:block">
+                {/* Carousel Top Hint & Controls */}
+                <div className="flex items-center justify-between mb-1 px-1 sm:px-2 pointer-events-auto">
+                  <div className="bg-stone-900/85 backdrop-blur-md px-3 py-1 rounded-full text-white text-[11px] font-bold shadow-md flex items-center gap-1.5">
+                    <Compass className="w-3 h-3 text-blue-400 shrink-0" />
+                    <span>
+                      {selectedProperty ? (
+                        <>Active: <b className="text-emerald-400">{selectedProperty.location.city.split('(')[0].trim()}</b> · <span className="font-mono text-stone-300">#{selectedProperty.verification.surveyNumber.split(' ')[0]}</span> ({formatCompactINR(selectedProperty.price)})</>
+                      ) : (
+                        <>Touch any card to frame surveyed boundary ({filteredProperties.length} in TN)</>
+                      )}
+                    </span>
+                  </div>
+
+                  {/* Left / Right Carousel Scroll Buttons */}
+                  <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md p-0.5 rounded-full border border-stone-200/90 shadow-md">
+                    <button
+                      onClick={() => scrollCarousel('left')}
+                      className="p-1 rounded-full hover:bg-stone-100 text-stone-600 transition"
+                      title="Scroll Left"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => scrollCarousel('right')}
+                      className="p-1 rounded-full hover:bg-stone-100 text-stone-600 transition"
+                      title="Scroll Right"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Horizontal Scrollable Compact Cards Dock */}
+                <div
+                  ref={bottomCarouselRef}
+                  className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1.5 pt-0.5 px-0.5 pr-6 pointer-events-auto scrollbar-none snap-x snap-mandatory"
+                  style={{ scrollBehavior: 'smooth' }}
+                >
+                  {filteredProperties.map(prop => (
+                    <div
+                      key={prop.id}
+                      ref={el => {
+                        cardRefs.current[prop.id] = el;
+                      }}
+                      className="snap-center"
+                    >
+                      <CompactPropertyCard
+                        property={prop}
+                        isSelected={selectedProperty?.id === prop.id}
+                        onSelect={() => {
+                          setSelectedProperty({ ...prop });
+                          setActiveCanvasTab('satellite');
+                        }}
+                        onOpenMasterplan={() => {
+                          setSelectedProperty({ ...prop });
+                          setActiveCanvasTab('masterplan');
+                        }}
+                        onOpenDetails={() => {
+                          setSelectedProperty({ ...prop });
+                          setIsDetailModalOpen(true);
+                        }}
+                        onOpenVisit={() => {
+                          setSelectedProperty({ ...prop });
+                          setIsDealModalOpen(true);
+                        }}
+                        onOpenStreetView={() => {
+                          setSelectedProperty({ ...prop });
+                          setIsStreetViewOpen(true);
+                        }}
+                        isSideView={false}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
 
             </div>
@@ -600,6 +779,7 @@ export default function Home() {
       )}
 
       <PropertyDetailModal />
+      <StreetViewModal />
       <CreateDealModal />
       <AddPropertyModal />
       <KycModal />

@@ -9,7 +9,8 @@ import {
   Compass,
   ArrowRight,
   Eye,
-  Layers
+  Layers,
+  View
 } from 'lucide-react';
 import { formatCurrency, formatNumber, formatCompactINR } from '@/lib/formatters';
 
@@ -20,6 +21,7 @@ interface CompactPropertyCardProps {
   onOpenMasterplan?: () => void;
   onOpenDetails: () => void;
   onOpenVisit: () => void;
+  onOpenStreetView?: () => void;
   isSideView?: boolean;
 }
 
@@ -30,6 +32,7 @@ export default function CompactPropertyCard({
   onOpenMasterplan,
   onOpenDetails,
   onOpenVisit,
+  onOpenStreetView,
   isSideView = false
 }: CompactPropertyCardProps) {
   const isLand = property.channel === 'land_plot';
@@ -118,6 +121,22 @@ export default function CompactPropertyCard({
                 >
                   <Layers className="w-2.5 h-2.5" />
                   <span>Plots</span>
+                </button>
+              )}
+
+              {onOpenStreetView && (
+                <button
+                  type="button"
+                  onClick={e => {
+                    e.stopPropagation();
+                    onSelect();
+                    onOpenStreetView();
+                  }}
+                  className="px-1.5 py-0.5 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80 text-[9px] font-bold transition flex items-center gap-0.5"
+                  title="Open 360° Street View"
+                >
+                  <View className="w-2.5 h-2.5 text-blue-600" />
+                  <span>360°</span>
                 </button>
               )}
 

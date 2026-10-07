@@ -15,7 +15,8 @@ import {
   Calendar,
   Layers,
   ArrowRight,
-  MessageSquare
+  MessageSquare,
+  View
 } from 'lucide-react';
 import { formatCurrency, formatNumber, formatIndianNumber } from '@/lib/formatters';
 
@@ -26,7 +27,8 @@ export default function PropertyDetailModal() {
     setIsDetailModalOpen,
     setIsDealModalOpen,
     setIsContactModalOpen,
-    setContactProperty
+    setContactProperty,
+    setIsStreetViewOpen
   } = useApp();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
@@ -178,6 +180,16 @@ export default function PropertyDetailModal() {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto shrink-0">
+              <button
+                onClick={() => {
+                  setIsStreetViewOpen(true);
+                }}
+                className="w-full sm:w-auto px-4 py-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5"
+              >
+                <View className="w-4 h-4 text-blue-600" />
+                <span>360° Street View</span>
+              </button>
+
               <button
                 onClick={() => {
                   setContactProperty(selectedProperty);
